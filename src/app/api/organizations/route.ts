@@ -56,6 +56,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
+    console.error('PUT /api/organizations error:', error);
     return NextResponse.json({ error: error.message }, { status: error.message === 'Unauthorized' ? 401 : 500 })
   }
 }

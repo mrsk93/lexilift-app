@@ -54,7 +54,7 @@ export default function LandingPage() {
             <div className="mt-20 relative max-w-5xl mx-auto">
               <div className="absolute -inset-1 rounded-2xl bg-gradient-to-b from-primary/20 to-transparent blur-xl"></div>
               <div className="relative rounded-xl border border-border bg-card/50 backdrop-blur-sm p-2 shadow-2xl overflow-hidden ring-1 ring-border">
-                <img src="https://placehold.co/1200x600/101827/006c49?text=Dashboard+Preview" alt="LexiLift Dashboard Preview" className="w-full rounded-lg border border-border/50" />
+                <img src="/dashboard-preview.png" alt="LexiLift Dashboard Preview" className="w-full rounded-lg border border-border/50 shadow-sm" />
               </div>
             </div>
           </div>

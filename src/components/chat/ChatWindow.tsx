@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Send, Loader2 } from 'lucide-react'
 
 export function ChatWindow({ orgId, sessionId }: { orgId: string, sessionId?: string }) {
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+  const { messages, input, setInput, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/query',
     body: {
       orgId,
@@ -45,7 +45,13 @@ export function ChatWindow({ orgId, sessionId }: { orgId: string, sessionId?: st
         >
           <input
             value={input || ''}
-            onChange={handleInputChange}
+            onChange={(e) => {
+              if (handleInputChange) {
+                handleInputChange(e);
+              } else if (setInput) {
+                setInput(e.target.value);
+              }
+            }}
             placeholder="Ask a question..."
             className="w-full bg-muted/50 border border-border rounded-full pl-6 pr-14 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
             disabled={isLoading}

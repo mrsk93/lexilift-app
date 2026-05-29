@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, MessageSquare, Settings, Users, CreditCard, LayoutDashboard, Code, Menu } from 'lucide-react'
+import { FileText, MessageSquare, Settings, Users, CreditCard, LayoutDashboard, Code, Menu, LogOut } from 'lucide-react'
 import { OrgSwitcher } from './OrgSwitcher'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -54,7 +54,7 @@ function SidebarContent({ organizations, currentOrgId }: any) {
         })}
       </nav>
       
-      <div className="mt-auto px-2">
+      <div className="mt-auto px-2 flex flex-col gap-2">
         <div className="bg-card border border-border p-3 rounded-md shadow-sm">
           <p className="text-xs font-mono font-medium mb-1">Query Usage</p>
           <div className="w-full bg-muted rounded-full h-1.5 mb-2">
@@ -62,6 +62,17 @@ function SidebarContent({ organizations, currentOrgId }: any) {
           </div>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">450 / 1000 Queries</p>
         </div>
+        
+        <button
+          onClick={async () => {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+          }}
+          className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-red-500 w-full text-left"
+        >
+          <LogOut className="h-4 w-4" />
+          Log Out
+        </button>
       </div>
     </div>
   )

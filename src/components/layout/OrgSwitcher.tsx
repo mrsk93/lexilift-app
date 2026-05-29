@@ -7,6 +7,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -66,22 +67,24 @@ export function OrgSwitcher({
         <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-[240px]">
-        <DropdownMenuLabel className="text-xs text-muted-foreground font-mono font-normal uppercase tracking-wider">
-          Workspaces
-        </DropdownMenuLabel>
-        {organizations.map((org) => (
-          <DropdownMenuItem 
-            key={org.id} 
-            className="flex items-center justify-between cursor-pointer"
-            onClick={() => switchOrg(org.id)}
-          >
-            <div className="flex flex-col">
-              <span className="font-medium">{org.name}</span>
-              <span className="text-xs text-muted-foreground capitalize">{org.plan} Plan</span>
-            </div>
-            {org.id === currentOrgId && <Check className="h-4 w-4 text-primary" />}
-          </DropdownMenuItem>
-        ))}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs text-muted-foreground font-mono font-normal uppercase tracking-wider">
+            Workspaces
+          </DropdownMenuLabel>
+          {organizations.map((org) => (
+            <DropdownMenuItem 
+              key={org.id} 
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => switchOrg(org.id)}
+            >
+              <div className="flex flex-col">
+                <span className="font-medium">{org.name}</span>
+                <span className="text-xs text-muted-foreground capitalize">{org.plan} Plan</span>
+              </div>
+              {org.id === currentOrgId && <Check className="h-4 w-4 text-primary" />}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="cursor-pointer text-primary">
           <PlusCircle className="mr-2 h-4 w-4" />
