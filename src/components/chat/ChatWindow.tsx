@@ -1,6 +1,6 @@
 'use client'
 
-import { useChat } from 'ai/react'
+import { useChat } from '@ai-sdk/react'
 import { useState, useRef, useEffect } from 'react'
 import { MessageBubble } from './MessageBubble'
 import { Button } from '@/components/ui/button'
@@ -44,7 +44,7 @@ export function ChatWindow({ orgId, sessionId }: { orgId: string, sessionId?: st
           className="relative flex items-center max-w-4xl mx-auto"
         >
           <input
-            value={input}
+            value={input || ''}
             onChange={handleInputChange}
             placeholder="Ask a question..."
             className="w-full bg-muted/50 border border-border rounded-full pl-6 pr-14 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
@@ -54,7 +54,7 @@ export function ChatWindow({ orgId, sessionId }: { orgId: string, sessionId?: st
             type="submit" 
             size="icon" 
             className="absolute right-2 rounded-full h-10 w-10"
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || !input?.trim()}
           >
             <Send className="w-4 h-4" />
           </Button>

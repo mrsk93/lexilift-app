@@ -86,10 +86,8 @@ export function Sidebar({ organizations, currentOrgId }: any) {
           <span className="font-heading font-bold text-lg">LexiLift</span>
         </div>
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu className="h-5 w-5" />
-            </Button>
+          <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden" />}>
+            <Menu className="h-5 w-5" />
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-64 border-r-0">
             <SidebarContent organizations={organizations} currentOrgId={currentOrgId} />
