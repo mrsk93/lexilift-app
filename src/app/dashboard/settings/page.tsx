@@ -40,7 +40,7 @@ export default function SettingsPage() {
           <div className="space-y-2 max-w-md">
             <Label htmlFor="llm-model">Default Model</Label>
             <Select value={model} onValueChange={setModel}>
-              <SelectTrigger id="llm-model">
+              <SelectTrigger id="llm-model" className="w-full">
                 <SelectValue placeholder="Select a model" />
               </SelectTrigger>
               <SelectContent>
