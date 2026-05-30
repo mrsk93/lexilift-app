@@ -4,6 +4,7 @@ import { db } from '@/lib/db/client'
 import { organizations } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import crypto from 'crypto'
+import { env } from '@/lib/env'
 
 export async function POST(req: Request) {
   try {
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
 
       if (orgId) {
         // Map product ID to plan name
-        const plan = subscription.product_id === 'pro_product_id' ? 'pro' : 'starter'
+        const plan = subscription.product_id === env.POLAR_PRO_PRODUCT_ID ? 'pro' : 'starter'
         
         await db.update(organizations)
           .set({ 
