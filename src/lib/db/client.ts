@@ -5,6 +5,15 @@ import { env } from '../env';
 
 const connectionString = env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/lexilift';
 
+declare global {
+  var postgresClient: postgres.Sql | undefined;
+}
+
 // Disable prefetch as it is not supported for "Transaction" pool mode
-const client = postgres(connectionString, { prepare: false });
+const client = globalThis.postgresClient || postgres(connectionString, { prepare: false });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.postgresClient = client;
+}
+
 export const db = drizzle(client, { schema });
