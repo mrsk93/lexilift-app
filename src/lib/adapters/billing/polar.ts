@@ -17,8 +17,8 @@ export class PolarAdapter {
     }
 
     try {
-      const checkout = await this.polar.checkouts.custom.create({
-        productId,
+      const checkout = await this.polar.checkouts.create({
+        products: [productId],
         successUrl,
         metadata: {
           orgId

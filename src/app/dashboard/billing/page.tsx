@@ -1,27 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { CheckCircle2, Zap } from 'lucide-react'
+import { createProCheckoutAction } from './actions'
 
-export default function BillingPage() {
+function BillingContent() {
+  const searchParams = useSearchParams()
+  const isUpgraded = searchParams.get('mock_checkout') === 'true'
+  const planParam = searchParams.get('plan')
+  
   const [loading, setLoading] = useState(false)
   
-  // Mock org data
+  // Mock org data - update dynamically based on checkout simulation
   const org = {
-    plan: 'starter',
+    plan: isUpgraded && planParam ? planParam : 'starter',
     queryCount: 342,
-    queryLimit: 500,
+    queryLimit: isUpgraded && planParam === 'pro' ? 5000 : 500,
   }
 
   const handleUpgrade = async () => {
     setLoading(true)
-    // Simulate Polar checkout redirect
-    setTimeout(() => {
-      window.location.href = '/dashboard/billing?mock_checkout=true&plan=pro'
-    }, 1000)
+    try {
+      const { url } = await createProCheckoutAction()
+      window.location.href = url
+    } catch (error) {
+      console.error('Failed to create checkout:', error)
+      setLoading(false)
+    }
   }
 
   const usagePercent = Math.min((org.queryCount / org.queryLimit) * 100, 100)
@@ -158,5 +167,13 @@ export default function BillingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<div className="flex h-full items-center justify-center p-8 text-muted-foreground">Loading billing...</div>}>
+      <BillingContent />
+    </Suspense>
   )
 }
