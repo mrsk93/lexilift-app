@@ -3,6 +3,7 @@ import { db } from '@/lib/db/client'
 import { documents } from '@/lib/db/schema'
 import { requireAuth, requireOrgAccess } from '@/lib/auth/org-utils'
 import { getStorage } from '@/lib/adapters/storage/supabase'
+import { inngest } from '@/lib/inngest/client'
 import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(request: Request) {
@@ -41,9 +42,12 @@ export async function POST(request: Request) {
       uploadedBy: user.id
     }).returning()
 
-    // 3. Trigger Ingestion Workflow (e.g. Vercel Workflows or Queue)
-    // For now we just return the document
-    // fetch('...trigger workflow...', { method: 'POST', body: JSON.stringify({ docId: newDoc.id }) })
+    // 3. Trigger Ingestion Workflow
+    try {
+      await inngest.send({ name: 'document/uploaded', data: { docId: newDoc.id } })
+    } catch (e) {
+      console.error('Inngest send failed, document will remain in processing:', e)
+    }
 
     return NextResponse.json(newDoc)
   } catch (error: any) {
