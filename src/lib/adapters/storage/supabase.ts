@@ -1,15 +1,11 @@
 import { StorageAdapter } from './interface'
-import { createClient } from '@supabase/supabase-js'
-import { env } from '@/lib/env'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export class SupabaseStorageAdapter implements StorageAdapter {
   private supabase
 
   constructor() {
-    this.supabase = createClient(
-      env.NEXT_PUBLIC_SUPABASE_URL!,
-      env.SUPABASE_SERVICE_ROLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    this.supabase = createAdminClient()
   }
 
   async uploadFile(path: string, file: File | Buffer): Promise<string> {
