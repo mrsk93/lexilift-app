@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, ChevronsUpDown, PlusCircle } from 'lucide-react'
+import { Check, ChevronsUpDown } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { PlanBadge } from './PlanBadge'
+import { CreateOrgDialog } from './CreateOrgDialog'
 
 type Organization = {
   id: string
@@ -86,10 +87,7 @@ export function OrgSwitcher({
           ))}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer text-primary">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          <span>Create Workspace</span>
-        </DropdownMenuItem>
+        <CreateOrgDialog />
       </DropdownMenuContent>
     </DropdownMenu>
   )
