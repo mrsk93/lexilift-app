@@ -10,16 +10,17 @@ import { createProCheckoutAction } from './actions'
 interface BillingClientProps {
   org: {
     plan: string | null;
+    queryCount: number | null;
     queryLimit: number | null;
   }
 }
 
 export function BillingClient({ org }: BillingClientProps) {
   const [loading, setLoading] = useState(false)
-  
+
   const currentPlan = org.plan || 'starter'
-  const queryLimit = org.queryLimit || 500
-  const queryCount = 342 // Still mocked for now, as we don't have usage tracking yet
+  const queryLimit = org.queryLimit ?? 500
+  const queryCount = org.queryCount ?? 0
 
   const handleUpgrade = async () => {
     setLoading(true)

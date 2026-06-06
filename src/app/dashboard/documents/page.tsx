@@ -1,24 +1,22 @@
+import { db } from '@/lib/db/client'
+import { documents } from '@/lib/db/schema'
+import { eq, desc } from 'drizzle-orm'
+import { getCurrentOrgId } from '@/lib/auth/current-org'
 import { UploadDropzone } from '@/components/documents/UploadDropzone'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { FileText, MoreHorizontal, Trash } from 'lucide-react'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { FileText } from 'lucide-react'
+import { DeleteDocButton } from '@/components/documents/DeleteDocButton'
 
-export default function DocumentsPage() {
-  const orgId = "mock-org-id" // In a real app, get this from context or props
+export default async function DocumentsPage() {
+  const orgId = await getCurrentOrgId()
+  if (!orgId) return null
 
-  // Mock data
-  const documents = [
-    { id: '1', name: 'LexiLift_Architecture.pdf', type: 'application/pdf', status: 'ready', size: 1048576, createdAt: new Date() },
-    { id: '2', name: 'Employee_Handbook.docx', type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', status: 'processing', size: 524288, createdAt: new Date() },
-    { id: '3', name: 'API_Documentation.md', type: 'text/markdown', status: 'failed', size: 20480, createdAt: new Date() },
-  ]
+  const docs = await db
+    .select()
+    .from(documents)
+    .where(eq(documents.orgId, orgId))
+    .orderBy(desc(documents.createdAt))
 
   return (
     <div className="space-y-8">
@@ -45,47 +43,37 @@ export default function DocumentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {documents.length === 0 ? (
+              {docs.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
                     No documents uploaded yet.
                   </TableCell>
                 </TableRow>
               ) : (
-                documents.map((doc) => (
-                  <TableRow key={doc.id}>
+                docs.map((d) => (
+                  <TableRow key={d.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{doc.name}</span>
+                        <span className="font-medium">{d.name}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge 
-                        variant={doc.status === 'ready' ? 'default' : doc.status === 'processing' ? 'secondary' : 'destructive'}
+                      <Badge
+                        variant={d.status === 'ready' ? 'default' : d.status === 'processing' ? 'secondary' : 'destructive'}
                         className="capitalize"
                       >
-                        {doc.status}
+                        {d.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {(doc.size / 1024 / 1024).toFixed(2)} MB
+                      {((d.fileSize || 0) / 1024 / 1024).toFixed(2)} MB
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {doc.createdAt.toLocaleDateString()}
+                      {d.createdAt ? d.createdAt.toLocaleDateString() : '—'}
                     </TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <DeleteDocButton id={d.id} />
                     </TableCell>
                   </TableRow>
                 ))
