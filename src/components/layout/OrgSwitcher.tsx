@@ -18,7 +18,7 @@ import { PlanBadge } from './PlanBadge'
 type Organization = {
   id: string
   name: string
-  plan: string
+  plan: string | null
 }
 
 export function OrgSwitcher({ 
@@ -61,7 +61,7 @@ export function OrgSwitcher({
         <div className="flex-1 overflow-hidden flex flex-col">
           <span className="text-sm font-medium truncate">{currentOrg.name}</span>
           <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <PlanBadge plan={currentOrg.plan} />
+            <PlanBadge plan={currentOrg.plan ?? undefined} />
           </span>
         </div>
         <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -79,7 +79,7 @@ export function OrgSwitcher({
             >
               <div className="flex flex-col">
                 <span className="font-medium">{org.name}</span>
-                <span className="text-xs text-muted-foreground capitalize">{org.plan} Plan</span>
+                <span className="text-xs text-muted-foreground capitalize">{org.plan ?? 'starter'} Plan</span>
               </div>
               {org.id === currentOrgId && <Check className="h-4 w-4 text-primary" />}
             </DropdownMenuItem>
