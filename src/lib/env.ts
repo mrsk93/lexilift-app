@@ -16,6 +16,7 @@ const serverSchema = z.object({
   POLAR_ORG_ID: z.string().min(1).optional(),
   POLAR_PRO_PRODUCT_ID: z.string().min(1).optional(),
   POLAR_TEAM_PRODUCT_ID: z.string().min(1).optional(),
+  POLAR_ENTERPRISE_CONTACT_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
   RESEND_API_KEY: z.string().min(1).optional(),
