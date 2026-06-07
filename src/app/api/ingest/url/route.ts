@@ -4,12 +4,7 @@ import { getCurrentProfile, requireOrgMember } from '@/lib/auth/org-utils'
 import { inngest } from '@/lib/inngest/client'
 import { db } from '@/lib/db/client'
 import { documents } from '@/lib/db/schema'
-
-// TODO(plan2-t21): replace with real plan-limit assertion
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function assertPlanLimit(_orgId: string, _resource: 'documents' | 'queries' | 'widgets') {
-  // No-op for now; enforced in Plan 2 Task 21
-}
+import { assertOrgPlanLimit } from '@/lib/billing/assertOrgPlanLimit'
 
 const schema = z.object({ url: z.string().url() })
 
@@ -21,7 +16,12 @@ export async function POST(req: Request) {
     }
     const orgId = profile.currentOrgId
     const { userId } = await requireOrgMember(orgId)
-    await assertPlanLimit(orgId, 'documents')
+    try {
+      await assertOrgPlanLimit(orgId, 'documents')
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Document limit reached'
+      return NextResponse.json({ error: message }, { status: 402 })
+    }
     const { url } = schema.parse(await req.json())
 
     const [doc] = await db

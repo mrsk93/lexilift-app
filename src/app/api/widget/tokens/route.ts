@@ -6,6 +6,7 @@ import { requireOrgAdmin, requireOrgMember } from '@/lib/auth/org-utils'
 import { getCurrentOrgId } from '@/lib/auth/current-org'
 import { db } from '@/lib/db/client'
 import { widgetTokens } from '@/lib/db/schema'
+import { assertOrgPlanLimit } from '@/lib/billing/assertOrgPlanLimit'
 
 const createSchema = z.object({
   name: z.string().min(1).max(40),
@@ -42,6 +43,13 @@ export async function POST(req: Request) {
     const orgId = await getCurrentOrgId()
     if (!orgId) return NextResponse.json({ error: 'No org' }, { status: 400 })
     await requireOrgAdmin(orgId)
+
+    try {
+      await assertOrgPlanLimit(orgId, 'widgets')
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Widget limit reached'
+      return NextResponse.json({ error: message }, { status: 402 })
+    }
 
     const parsed = createSchema.parse(await req.json())
 

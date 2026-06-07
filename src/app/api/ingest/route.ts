@@ -5,6 +5,7 @@ import { requireAuth, requireOrgAccess } from '@/lib/auth/org-utils'
 import { getStorage } from '@/lib/adapters/storage/supabase'
 import { inngest } from '@/lib/inngest/client'
 import { v4 as uuidv4 } from 'uuid'
+import { assertOrgPlanLimit } from '@/lib/billing/assertOrgPlanLimit'
 
 export async function POST(request: Request) {
   try {
@@ -20,6 +21,13 @@ export async function POST(request: Request) {
 
     // Verify user has access to this org
     await requireOrgAccess(orgId)
+
+    try {
+      await assertOrgPlanLimit(orgId, 'documents')
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Document limit reached'
+      return NextResponse.json({ error: message }, { status: 402 })
+    }
 
     // 1. Upload to storage
     const storage = getStorage()

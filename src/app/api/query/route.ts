@@ -5,6 +5,8 @@ import { retrieveContext, buildContextPrompt } from '@/lib/langchain/rag-chain'
 import { createUIMessageStream, createUIMessageStreamResponse } from 'ai'
 import { db } from '@/lib/db/client'
 import { chatMessages } from '@/lib/db/schema'
+import { assertOrgPlanLimit } from '@/lib/billing/assertOrgPlanLimit'
+import { incrementUsage } from '@/lib/billing/usage'
 
 type ChatRole = 'system' | 'user' | 'assistant'
 
@@ -36,6 +38,13 @@ export async function POST(req: Request) {
     }
 
     await requireOrgAccess(orgId)
+
+    try {
+      await assertOrgPlanLimit(orgId, 'queries')
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Query limit reached'
+      return NextResponse.json({ error: message }, { status: 402 })
+    }
 
     const lastMessage = messages[messages.length - 1] as IncomingMessage
     const userQuery = extractText(lastMessage)
@@ -98,6 +107,11 @@ export async function POST(req: Request) {
           ])
         } catch (e) {
           console.error('Failed to save chat history', e)
+        }
+        try {
+          await incrementUsage(orgId)
+        } catch (e) {
+          console.error('Usage increment failed', e)
         }
       },
     })

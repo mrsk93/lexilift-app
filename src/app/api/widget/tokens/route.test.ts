@@ -8,6 +8,7 @@ const {
   mockRequireMember,
   mockGetCurrentOrgId,
   mockDb,
+  mockAssertOrgPlanLimit,
 } = vi.hoisted(() => ({
   mockRequireAdmin: vi.fn(),
   mockRequireMember: vi.fn(),
@@ -17,6 +18,7 @@ const {
     select: vi.fn(),
     delete: vi.fn(),
   },
+  mockAssertOrgPlanLimit: vi.fn(),
 }))
 
 vi.mock('@/lib/auth/org-utils', () => ({
@@ -29,6 +31,10 @@ vi.mock('@/lib/auth/current-org', () => ({
 }))
 
 vi.mock('@/lib/db/client', () => ({ db: mockDb }))
+
+vi.mock('@/lib/billing/assertOrgPlanLimit', () => ({
+  assertOrgPlanLimit: mockAssertOrgPlanLimit,
+}))
 
 import { GET as LIST, POST as CREATE } from './route'
 import { DELETE as REMOVE } from './[id]/route'
