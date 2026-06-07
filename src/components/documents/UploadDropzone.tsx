@@ -52,7 +52,11 @@ export function UploadDropzone({ orgId }: { orgId: string }) {
           body: formData 
         })
         
-        if (!response.ok) throw new Error('Upload failed')
+        if (!response.ok) {
+          // Surface the server's actual error message so users (and logs) see the cause
+          const detail = await response.text().catch(() => '')
+          throw new Error(detail || `Upload failed (${response.status})`)
+        }
 
         setProgress(prev => ({ ...prev, [file.name]: 100 }))
         notify.success(`Uploaded ${file.name}`)
