@@ -6,6 +6,7 @@ import { requireAuth } from '@/lib/auth/org-utils'
 import { getCurrentOrgId } from '@/lib/auth/current-org'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
+import { CommandPaletteProvider } from '@/components/ui/CommandPaletteProvider'
 
 export default async function DashboardLayout({
   children,
@@ -56,6 +57,7 @@ export default async function DashboardLayout({
           {children}
         </div>
       </main>
+      <CommandPaletteProvider />
     </div>
   )
 }
