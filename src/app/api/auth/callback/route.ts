@@ -3,6 +3,10 @@ import { createClient } from '@/lib/auth/supabase/server'
 import { db } from '@/lib/db/client'
 import { profiles, organizations, memberships } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
+import { sendEmail } from '@/lib/email/send'
+import { render } from '@react-email/render'
+import { WelcomeEmail } from '@/lib/email/templates/welcome'
+import { env } from '@/lib/env'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -45,6 +49,20 @@ export async function GET(request: Request) {
           userId: data.user.id,
           role: 'owner'
         })
+
+        // 4. Send welcome email (non-blocking)
+        if (data.user.email) {
+          sendEmail({
+            to: data.user.email,
+            subject: 'Welcome to LexiLift',
+            html: await render(
+              WelcomeEmail({
+                dashboardUrl: `${env.APP_URL}/dashboard`,
+                name: data.user.user_metadata?.full_name,
+              })
+            ),
+          }).catch((e) => console.error('Welcome email failed', e))
+        }
       }
       
       return NextResponse.redirect(`${origin}${next}`)
