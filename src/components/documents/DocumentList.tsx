@@ -10,6 +10,7 @@ import { RestoreButton } from './RestoreButton'
 import { ReprocessButton } from './ReprocessButton'
 import { BulkActionsBar } from './BulkActionsBar'
 import { DocumentFilters, type DocFilter } from './DocumentFilters'
+import { formatDate } from '@/lib/utils/format'
 
 export interface DocRow {
   id: string
@@ -197,7 +198,7 @@ export function DocumentList({
                     {d.fileSize ? (d.fileSize / 1024 / 1024).toFixed(2) + ' MB' : '—'}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '—'}
+                    {formatDate(d.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">

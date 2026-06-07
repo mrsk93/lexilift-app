@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Copy, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { formatDate } from '@/lib/utils/format'
 
 export interface WidgetToken {
   id: string
@@ -83,7 +84,7 @@ export function WidgetTokensTable({ tokens, appUrl, onDeleted }: Props) {
                 </div>
               </td>
               <td className="px-4 py-2 text-muted-foreground text-xs">
-                {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '—'}
+                {formatDate(t.createdAt)}
               </td>
               <td className="px-4 py-2 text-muted-foreground text-xs">Never</td>
               <td className="px-2 py-2">

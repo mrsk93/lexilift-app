@@ -1,5 +1,6 @@
 'use client'
 import { Progress } from '@/components/ui/progress'
+import { formatNumber } from '@/lib/utils/format'
 
 export function UsageGauge({
   used,
@@ -18,7 +19,7 @@ export function UsageGauge({
       <div className="flex justify-between text-sm">
         <span className="font-medium">{label}</span>
         <span className="text-muted-foreground font-mono">
-          {used.toLocaleString()} / {isUnlimited ? '∞' : limit.toLocaleString()}
+          {formatNumber(used)} / {isUnlimited ? '∞' : formatNumber(limit)}
         </span>
       </div>
       <Progress

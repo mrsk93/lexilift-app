@@ -1,6 +1,7 @@
 'use client'
 import { formatAmount } from '@/lib/billing/invoice'
 import { ExternalLink, FileText } from 'lucide-react'
+import { formatDate } from '@/lib/utils/format'
 
 export interface Invoice {
   id: string
@@ -41,7 +42,7 @@ export function InvoiceList({ invoices }: { invoices: Invoice[] }) {
         <tbody>
           {invoices.map((i) => (
             <tr key={i.id} className="border-t">
-              <td className="px-4 py-2">{new Date(i.createdAt).toLocaleDateString()}</td>
+              <td className="px-4 py-2">{formatDate(i.createdAt)}</td>
               <td className="px-4 py-2 font-mono">{formatAmount(i.amountCents, i.currency)}</td>
               <td className="px-4 py-2">
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[i.invoiceStatus] ?? 'bg-gray-100 text-gray-700'}`}>

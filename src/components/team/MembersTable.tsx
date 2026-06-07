@@ -4,6 +4,7 @@ import { RoleSelect } from './RoleSelect'
 import { RemoveMemberDialog } from './RemoveMemberDialog'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Users } from 'lucide-react'
+import { formatDate } from '@/lib/utils/format'
 
 export type Role = 'owner' | 'admin' | 'member'
 
@@ -70,7 +71,7 @@ export function MembersTable({
                 )}
               </td>
               <td className="px-4 py-2 text-muted-foreground">
-                {new Date(m.joinedAt).toLocaleDateString()}
+                {formatDate(m.joinedAt)}
               </td>
               {canEdit && (
                 <td className="px-4 py-2 text-right">

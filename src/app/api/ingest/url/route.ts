@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentProfile, requireOrgMember } from '@/lib/auth/org-utils'
-import { inngest } from '@/lib/inngest/client'
+import { safeSend } from '@/lib/inngest/client'
 import { db } from '@/lib/db/client'
 import { documents } from '@/lib/db/schema'
 import { assertOrgPlanLimit } from '@/lib/billing/assertOrgPlanLimit'
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       })
       .returning()
 
-    await inngest.send({
+    await safeSend({
       name: 'document/url.submitted',
       data: { documentId: doc.id, url },
     })
