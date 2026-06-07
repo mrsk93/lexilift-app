@@ -36,68 +36,54 @@ vi.mock('@/lib/db/client', () => ({ db: { select: mockDbSelect } }))
 
 import { retrieveContext, buildContextPrompt } from './rag-chain'
 
-function buildDbChain(rows: Array<{ id: string; docId: string; content: string; rank: number }>) {
-  return {
-    from: () => ({
-      where: () => ({
-        orderBy: () => ({
-          limit: async () => rows,
-        }),
-      }),
-    }),
-  }
-}
-
-describe('retrieveContext — Postgres fallback', () => {
+describe('retrieveContext', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('returns the Postgres FTS results when Pinecone returns 0 matches', async () => {
-    mockQuery.mockResolvedValueOnce([]) // Pinecone returns nothing
-    mockDbSelect.mockImplementationOnce(() =>
-      buildDbChain([
-        { id: 'c1', docId: 'd1', content: 'Falcon A/B testing platform was launched in November.', rank: 1.5 },
-        { id: 'c2', docId: 'd1', content: 'Total of 18 critical bugs were fixed in Phase 1.', rank: 0.8 },
-      ])
-    )
+  it('returns chunks whose text comes from the original matches, NOT from the reranker', async () => {
+    // This is the regression that caused "I don't have enough information":
+    // the Voyage reranker API returns {index, relevance_score} WITHOUT a
+    // 'document' field. The old code did `text: r.document` and got
+    // undefined, so the LLM got empty context.
+    mockQuery.mockResolvedValueOnce([
+      { id: 'p1', score: 0.9, metadata: { text: 'ORIGINAL_CHUNK_TEXT', docId: 'd1' } },
+      { id: 'p2', score: 0.8, metadata: { text: 'SECOND_CHUNK', docId: 'd1' } },
+    ])
+    // The reranker returns index + relevance_score but NO 'document' field
+    mockRerank.mockResolvedValueOnce([
+      { index: 1, relevance_score: 0.95 },
+      { index: 0, relevance_score: 0.7 },
+    ])
 
-    const result = await retrieveContext('Falcon summary', 'org-1')
+    const result = await retrieveContext('any query', 'org-1')
     expect(result).toHaveLength(2)
-    expect(result[0]?.text).toContain('Falcon A/B')
+    // First result is reranked[0] = original[1] = 'SECOND_CHUNK'
+    expect(result[0]?.text).toBe('SECOND_CHUNK')
+    expect(result[0]?.score).toBe(0.95)
+    // Second result is reranked[1] = original[0] = 'ORIGINAL_CHUNK_TEXT'
+    expect(result[1]?.text).toBe('ORIGINAL_CHUNK_TEXT')
+    expect(result[1]?.score).toBe(0.7)
+    // Metadata follows the source match, not the reranker
     expect(result[0]?.metadata?.docId).toBe('d1')
   })
 
-  it('falls back to Postgres when Pinecone throws (e.g. dead API key)', async () => {
-    mockQuery.mockRejectedValueOnce(new Error('PineconeAuthorizationError: API key rejected'))
-    mockDbSelect.mockImplementationOnce(() =>
-      buildDbChain([{ id: 'c1', docId: 'd1', content: 'Some chunk text', rank: 1.0 }])
-    )
+  it('returns [] when Pinecone returns no matches', async () => {
+    mockQuery.mockResolvedValueOnce([])
+    const result = await retrieveContext('any query', 'org-1')
+    expect(result).toEqual([])
+    // No fallback to Postgres — we trust the vector store
+    expect(mockDbSelect).not.toHaveBeenCalled()
+  })
 
+  it('returns [] when match metadata has no text (defensive)', async () => {
+    mockQuery.mockResolvedValueOnce([
+      { id: 'p1', score: 0.9, metadata: { docId: 'd1' } }, // no text
+    ])
+    mockRerank.mockResolvedValueOnce([{ index: 0, relevance_score: 0.9 }])
     const result = await retrieveContext('any query', 'org-1')
     expect(result).toHaveLength(1)
-    expect(result[0]?.text).toBe('Some chunk text')
-  })
-
-  it('returns [] when both Pinecone and the Postgres fallback return nothing', async () => {
-    mockQuery.mockResolvedValueOnce([])
-    mockDbSelect.mockImplementationOnce(() => buildDbChain([]))
-    const result = await retrieveContext('no results', 'org-1')
-    expect(result).toEqual([])
-  })
-
-  it('uses Pinecone when it has matches (does not fall back)', async () => {
-    mockQuery.mockResolvedValueOnce([
-      { id: 'p1', score: 0.9, metadata: { text: 'pinecone chunk', docId: 'd1' } },
-    ])
-    mockRerank.mockResolvedValueOnce([
-      { index: 0, document: 'pinecone chunk', relevance_score: 0.9 },
-    ])
-
-    const result = await retrieveContext('test', 'org-1')
-    expect(result).toHaveLength(1)
-    expect(result[0]?.text).toBe('pinecone chunk')
-    expect(mockDbSelect).not.toHaveBeenCalled()
+    expect(result[0]?.text).toBe('') // empty string fallback
   })
 })
 
@@ -109,5 +95,11 @@ describe('buildContextPrompt', () => {
     expect(prompt).toContain('[Source 1 | Doc: d1]')
     expect(prompt).toContain('X is a thing')
     expect(prompt).toContain('What is X?')
+  })
+
+  it('omits the prompt source markers when there is no context', () => {
+    const prompt = buildContextPrompt('What is X?', [])
+    expect(prompt).toContain('If the answer is not contained in the context, say "I don\'t have enough information')
+    expect(prompt).toContain('User Question: What is X?')
   })
 })
