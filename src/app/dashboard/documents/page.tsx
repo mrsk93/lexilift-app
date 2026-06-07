@@ -3,6 +3,7 @@ import { documents } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { getCurrentOrgId } from '@/lib/auth/current-org'
 import { UploadDropzone } from '@/components/documents/UploadDropzone'
+import { UrlIngestForm } from '@/components/documents/UrlIngestForm'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { FileText } from 'lucide-react'
@@ -23,6 +24,10 @@ export default async function DocumentsPage() {
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-heading font-bold tracking-tight">Documents</h1>
         <p className="text-muted-foreground">Upload and manage files in your knowledge base.</p>
+      </div>
+
+      <div className="bg-card border border-border rounded-lg p-6">
+        <UrlIngestForm />
       </div>
 
       <div className="bg-card border border-border rounded-lg p-6">

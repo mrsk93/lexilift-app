@@ -1,10 +1,11 @@
-import { inngest, documentUploaded } from '../client'
+import { inngest, documentUploaded, documentUrlSubmitted } from '../client'
 import { db } from '@/lib/db/client'
 import { documents, documentChunks } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { parsePdf } from '@/lib/parsers/pdf'
 import { parseDocx } from '@/lib/parsers/docx'
 import { parseText } from '@/lib/parsers/text'
+import { fetchAndParseUrl } from '@/lib/parsers/url'
 import { splitText } from '@/lib/langchain/chunking'
 import { getVectorStore } from '@/lib/adapters/vector-store/pinecone'
 import { OpenAIEmbeddings } from '@langchain/openai'
@@ -14,9 +15,16 @@ import { v4 as uuidv4 } from 'uuid'
 const DIM = 1536
 
 export const processDocument = inngest.createFunction(
-  { id: 'process-document', retries: 3, triggers: [documentUploaded] },
+  {
+    id: 'process-document',
+    retries: 3,
+    triggers: [documentUploaded, documentUrlSubmitted],
+  },
   async ({ event, step }) => {
-    const { docId } = event.data
+    const isUrlEvent = event.name === 'document/url.submitted'
+    const docId = isUrlEvent
+      ? (event.data as { documentId: string; url: string }).documentId
+      : (event.data as { docId: string }).docId
 
     const doc = await step.run('load-doc', async () => {
       const rows = await db
@@ -28,17 +36,31 @@ export const processDocument = inngest.createFunction(
     })
     if (!doc) throw new Error(`Document ${docId} not found`)
 
-    const buffer = await step.run('download', async () => {
-      const r = await fetch(doc.fileUrl!)
-      if (!r.ok) throw new Error(`Storage download failed: ${r.statusText}`)
-      return Buffer.from(await r.arrayBuffer())
-    })
+    let text: string
 
-    const text = await step.run('parse', async () => {
-      if (doc.fileType === 'application/pdf') return parsePdf(buffer)
-      if (doc.fileType?.includes('word')) return parseDocx(buffer)
-      return parseText(buffer)
-    })
+    if (isUrlEvent) {
+      const url = (event.data as { documentId: string; url: string }).url
+      const result = await step.run('fetch-url', () => fetchAndParseUrl(url))
+      text = result.text
+      await step.run('set-url-name', () =>
+        db
+          .update(documents)
+          .set({ name: result.title })
+          .where(eq(documents.id, docId))
+      )
+    } else {
+      const buffer = await step.run('download', async () => {
+        const r = await fetch(doc.fileUrl!)
+        if (!r.ok) throw new Error(`Storage download failed: ${r.statusText}`)
+        return Buffer.from(await r.arrayBuffer())
+      })
+
+      text = await step.run('parse', async () => {
+        if (doc.fileType === 'application/pdf') return parsePdf(buffer)
+        if (doc.fileType?.includes('word')) return parseDocx(buffer)
+        return parseText(buffer)
+      })
+    }
 
     const chunks = await step.run('chunk', async () => splitText(text))
     if (chunks.length === 0) {
