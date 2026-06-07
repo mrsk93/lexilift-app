@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { RoleSelect } from './RoleSelect'
 import { RemoveMemberDialog } from './RemoveMemberDialog'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Users } from 'lucide-react'
 
 export type Role = 'owner' | 'admin' | 'member'
 
@@ -22,6 +24,16 @@ export function MembersTable({
 }) {
   const canEdit = currentUserRole === 'owner' || currentUserRole === 'admin'
   const [rows, setRows] = useState(members)
+
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        title="No teammates yet"
+        description="Invite your first teammate to start collaborating."
+        icon={<Users className="w-10 h-10 text-muted-foreground" />}
+      />
+    )
+  }
 
   return (
     <div className="border rounded-lg overflow-hidden">
