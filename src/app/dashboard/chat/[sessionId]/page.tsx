@@ -5,6 +5,7 @@ import { chatSessions } from '@/lib/db/schema'
 import { ChatWindow } from '@/components/chat/ChatWindow'
 import { NewChatButton } from '@/components/chat/NewChatButton'
 import { SessionList, type Session } from '@/components/chat/SessionList'
+import type { ModelId } from '@/lib/llm/models'
 
 export default async function ChatSessionPage({
   params,
@@ -65,7 +66,12 @@ export default async function ChatSessionPage({
         <SessionList sessions={sessions} activeId={sessionId} />
       </aside>
       <main className="flex-1 min-w-0">
-        <ChatWindow orgId={orgId} sessionId={sessionId} />
+        <ChatWindow
+          orgId={orgId}
+          sessionId={sessionId}
+          model={(session.llmModel ?? 'gpt-4o') as ModelId}
+          title={session.title}
+        />
       </main>
     </div>
   )
