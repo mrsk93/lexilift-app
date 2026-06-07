@@ -12,8 +12,7 @@ import { OpenAIEmbeddings } from '@langchain/openai'
 import { env } from '@/lib/env'
 import { v4 as uuidv4 } from 'uuid'
 import { trackServerEvent } from '@/lib/analytics/posthog-server'
-
-const DIM = 1536
+import { makeMockEmbedding, openAIEmbeddingOptions } from '@/lib/llm/embeddings'
 
 export const processDocument = inngest.createFunction(
   {
@@ -76,11 +75,11 @@ export const processDocument = inngest.createFunction(
 
     const vectors = await step.run('embed', async () => {
       if (!env.OPENAI_API_KEY) {
-        return chunks.map(() => new Array(DIM).fill(0.1))
+        return chunks.map(() => makeMockEmbedding())
       }
       const emb = new OpenAIEmbeddings({
         openAIApiKey: env.OPENAI_API_KEY,
-        modelName: 'text-embedding-3-small',
+        ...openAIEmbeddingOptions,
       })
       return emb.embedDocuments(chunks.map((c) => c.pageContent))
     })

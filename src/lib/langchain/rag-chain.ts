@@ -2,19 +2,20 @@ import { getVectorStore } from '@/lib/adapters/vector-store/pinecone'
 import { getReranker } from '@/lib/adapters/reranker/voyage'
 import { OpenAIEmbeddings } from '@langchain/openai'
 import { env } from '@/lib/env'
+import { makeMockEmbedding, openAIEmbeddingOptions } from '@/lib/llm/embeddings'
 
 export async function retrieveContext(query: string, orgId: string) {
   // 1. Embed Query
   const embeddings = new OpenAIEmbeddings({
     openAIApiKey: env.OPENAI_API_KEY || 'mock-key',
-    modelName: 'text-embedding-3-small'
+    ...openAIEmbeddingOptions,
   })
-  
+
   let queryEmbedding: number[] = []
   if (env.OPENAI_API_KEY) {
     queryEmbedding = await embeddings.embedQuery(query)
   } else {
-    queryEmbedding = Array(1536).fill(0.1)
+    queryEmbedding = makeMockEmbedding()
   }
 
   // 2. Query Pinecone Vector Store (top 20 for hybrid search/reranking)

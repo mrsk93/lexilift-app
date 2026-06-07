@@ -10,6 +10,12 @@ const serverSchema = z.object({
   PINECONE_API_KEY: z.string().min(1).optional(),
   PINECONE_INDEX: z.string().min(1).optional(),
   PINECONE_ENVIRONMENT: z.string().min(1).optional(),
+  /**
+   * Embedding vector dimension. Must match the dimension of the Pinecone
+   * index. Defaults to 1536 (OpenAI text-embedding-3-small). OpenAI also
+   * supports 256, 512, 1024, 3072 for that model.
+   */
+  EMBEDDING_DIMENSION: z.coerce.number().int().positive().default(1536),
   VOYAGE_API_KEY: z.string().min(1).optional(),
   POLAR_ACCESS_TOKEN: z.string().min(1).optional(),
   POLAR_WEBHOOK_SECRET: z.string().min(1).optional(),
