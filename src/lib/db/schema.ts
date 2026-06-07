@@ -29,6 +29,7 @@ export const organizations = pgTable('organizations', {
   llmModel: text('llm_model').default('gpt-4o'),
   documentsCount: integer('documents_count').default(0),
   dataRegion: text('data_region').default('us'),
+  onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
 });
 
 export const memberships = pgTable(

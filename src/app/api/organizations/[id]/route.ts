@@ -7,6 +7,38 @@ import { organizations } from '@/lib/db/schema'
 
 const putSchema = z.object({ name: z.string().min(1).max(60) })
 
+const patchSchema = z.object({
+  name: z.string().min(1).max(60).optional(),
+  onboardingCompletedAt: z.string().datetime().optional(),
+})
+
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
+    const { orgId } = await requireOrgAdmin(id)
+    if (orgId !== id) {
+      return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+    }
+    const body = patchSchema.parse(await req.json())
+    const update: { name?: string; onboardingCompletedAt?: Date; updatedAt: Date } = {
+      updatedAt: new Date(),
+    }
+    if (body.name !== undefined) update.name = body.name
+    if (body.onboardingCompletedAt !== undefined) {
+      update.onboardingCompletedAt = new Date(body.onboardingCompletedAt)
+    }
+    await db.update(organizations).set(update).where(eq(organizations.id, orgId))
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return NextResponse.json({ error: e.issues[0]?.message ?? 'Invalid input' }, { status: 400 })
+    }
+    const msg = e instanceof Error ? e.message : 'Internal error'
+    if (msg === 'Forbidden') return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
+}
+
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params

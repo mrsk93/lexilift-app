@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/org-utils'
 import { getCurrentOrgId } from '@/lib/auth/current-org'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 
 export default async function DashboardLayout({
   children,
@@ -28,12 +29,19 @@ export default async function DashboardLayout({
       plan: organizations.plan,
       queryCount: organizations.queryCount,
       queryLimit: organizations.queryLimit,
+      onboardingCompletedAt: organizations.onboardingCompletedAt,
     })
     .from(organizations)
     .innerJoin(memberships, eq(memberships.orgId, organizations.id))
     .where(eq(memberships.userId, user.id))
 
   const currentOrg = userOrgs.find((org) => org.id === currentOrgId)
+
+  const headerList = await headers()
+  const pathname = headerList.get('x-pathname') ?? ''
+  if (!currentOrg?.onboardingCompletedAt && pathname !== '/dashboard/onboarding') {
+    redirect('/dashboard/onboarding')
+  }
 
   return (
     <div className="flex min-h-screen bg-background">

@@ -12,6 +12,8 @@ export async function proxy(request: NextRequest) {
   const response = await updateSession(request)
   const { pathname } = request.nextUrl
 
+  response.headers.set('x-pathname', pathname)
+
   if (PUBLIC_PREFIXES.some(p => pathname.startsWith(p))) return response
   if (pathname === '/' || pathname.startsWith('/api/health')) return response
 
