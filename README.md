@@ -4,6 +4,17 @@ LexiLift is an AI-powered document ingestion and RAG (Retrieval-Augmented Genera
 
 With multi-LLM support, you can switch between OpenAI GPT-4o, Anthropic Claude 3.5 Sonnet, and Google Gemini 1.5 Pro to power your AI assistant, all backed by a high-performance vector search pipeline.
 
+## Local development
+
+```bash
+npm install
+cp .env.example .env.local  # fill in keys
+npm run dev:all             # starts Supabase + Inngest + Next.js concurrently
+npm run seed                # seeds 1 starter + 1 pro org
+```
+
+Open [http://localhost:3000](http://localhost:3000). The Inngest dev UI is at [http://localhost:8288](http://localhost:8288).
+
 ## 🚀 Features
 
 - **Multi-Tenant Architecture**: Robust organization and user management with Supabase.

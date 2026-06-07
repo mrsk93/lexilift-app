@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, ChevronsUpDown, PlusCircle } from 'lucide-react'
+import { Check, ChevronsUpDown } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,11 +14,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { PlanBadge } from './PlanBadge'
+import { CreateOrgDialog } from './CreateOrgDialog'
 
 type Organization = {
   id: string
   name: string
-  plan: string
+  plan: string | null
 }
 
 export function OrgSwitcher({ 
@@ -61,7 +62,7 @@ export function OrgSwitcher({
         <div className="flex-1 overflow-hidden flex flex-col">
           <span className="text-sm font-medium truncate">{currentOrg.name}</span>
           <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <PlanBadge plan={currentOrg.plan} />
+            <PlanBadge plan={currentOrg.plan ?? undefined} />
           </span>
         </div>
         <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -79,17 +80,14 @@ export function OrgSwitcher({
             >
               <div className="flex flex-col">
                 <span className="font-medium">{org.name}</span>
-                <span className="text-xs text-muted-foreground capitalize">{org.plan} Plan</span>
+                <span className="text-xs text-muted-foreground capitalize">{org.plan ?? 'starter'} Plan</span>
               </div>
               {org.id === currentOrgId && <Check className="h-4 w-4 text-primary" />}
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer text-primary">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          <span>Create Workspace</span>
-        </DropdownMenuItem>
+        <CreateOrgDialog />
       </DropdownMenuContent>
     </DropdownMenu>
   )

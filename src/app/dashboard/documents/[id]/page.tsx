@@ -2,7 +2,7 @@ import { db } from '@/lib/db/client'
 import { documents, documentChunks } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { notFound } from 'next/navigation'
-import { requireAuth } from '@/lib/auth/org-utils'
+import { requireAuth, requireOrgAccess } from '@/lib/auth/org-utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
@@ -12,16 +12,18 @@ export default async function DocumentDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  
-  // Actually requireAuth or org access could be used here
-  // const user = await requireAuth()
 
-  // For testing, just query DB directly
+  await requireAuth()
+
   const docs = await db.select().from(documents).where(eq(documents.id, id)).limit(1)
   const doc = docs[0]
 
   if (!doc) {
     notFound()
+  }
+
+  if (doc.orgId) {
+    await requireOrgAccess(doc.orgId)
   }
 
   const chunks = await db.select()
@@ -37,7 +39,7 @@ export default async function DocumentDetailPage({
           <p className="text-muted-foreground text-sm flex items-center gap-2 mt-1">
             <span>{doc.fileType}</span>
             <span>&bull;</span>
-            <span>{(doc.fileSize || 0) / 1024 / 1024} MB</span>
+            <span>{((doc.fileSize || 0) / 1024 / 1024).toFixed(2)} MB</span>
             <span>&bull;</span>
             <Badge variant={doc.status === 'ready' ? 'default' : 'secondary'} className="capitalize">{doc.status}</Badge>
           </p>

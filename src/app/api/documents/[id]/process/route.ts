@@ -3,6 +3,7 @@ import { db } from '@/lib/db/client'
 import { documents } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { requireAuth, requireOrgAccess } from '@/lib/auth/org-utils'
+import { inngest } from '@/lib/inngest/client'
 
 export async function POST(
   request: Request,
@@ -27,7 +28,11 @@ export async function POST(
       .where(eq(documents.id, id))
 
     // Trigger Ingestion Workflow
-    // fetch('...trigger workflow...', { method: 'POST', body: JSON.stringify({ docId: doc.id }) })
+    try {
+      await inngest.send({ name: 'document/uploaded', data: { docId: id } })
+    } catch (e) {
+      console.error('Inngest re-process send failed:', e)
+    }
 
     return NextResponse.json({ success: true, status: 'processing' })
   } catch (error: any) {

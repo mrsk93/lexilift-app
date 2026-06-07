@@ -18,9 +18,26 @@ const navItems = [
   { name: 'Billing', href: '/dashboard/billing', icon: CreditCard },
 ]
 
-function SidebarContent({ organizations, currentOrgId }: any) {
+type SidebarOrg = {
+  id: string
+  name: string
+  plan: string | null
+}
+
+function SidebarContent({
+  organizations,
+  currentOrgId,
+  queryCount,
+  queryLimit,
+}: {
+  organizations: SidebarOrg[]
+  currentOrgId: string
+  queryCount: number
+  queryLimit: number
+}) {
   const pathname = usePathname()
-  
+  const usagePercent = queryLimit > 0 ? Math.min((queryCount / queryLimit) * 100, 100) : 0
+
   return (
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border w-64 p-4 gap-6">
       <div className="flex items-center gap-2 px-2">
@@ -29,11 +46,11 @@ function SidebarContent({ organizations, currentOrgId }: any) {
         </div>
         <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">LexiLift</span>
       </div>
-      
+
       <div className="px-1">
         <OrgSwitcher organizations={organizations} currentOrgId={currentOrgId} />
       </div>
-      
+
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -42,8 +59,8 @@ function SidebarContent({ organizations, currentOrgId }: any) {
               key={item.name}
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors text-sm font-medium ${
-                isActive 
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                isActive
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                   : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
               }`}
             >
@@ -53,16 +70,18 @@ function SidebarContent({ organizations, currentOrgId }: any) {
           )
         })}
       </nav>
-      
+
       <div className="mt-auto px-2 flex flex-col gap-2">
         <div className="bg-card border border-border p-3 rounded-md shadow-sm">
           <p className="text-xs font-mono font-medium mb-1">Query Usage</p>
           <div className="w-full bg-muted rounded-full h-1.5 mb-2">
-            <div className="bg-primary h-1.5 rounded-full" style={{ width: '45%' }}></div>
+            <div className="bg-primary h-1.5 rounded-full" style={{ width: `${usagePercent}%` }}></div>
           </div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">450 / 1000 Queries</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">
+            {queryCount} / {queryLimit} Queries
+          </p>
         </div>
-        
+
         <button
           onClick={async () => {
             await fetch('/api/auth/logout', { method: 'POST' });
@@ -78,14 +97,29 @@ function SidebarContent({ organizations, currentOrgId }: any) {
   )
 }
 
-export function Sidebar({ organizations, currentOrgId }: any) {
+export function Sidebar({
+  organizations,
+  currentOrgId,
+  queryCount = 0,
+  queryLimit = 500,
+}: {
+  organizations: SidebarOrg[]
+  currentOrgId: string
+  queryCount?: number
+  queryLimit?: number
+}) {
   const [open, setOpen] = useState(false)
 
   return (
     <>
       {/* Desktop Sidebar */}
       <div className="hidden md:block h-screen sticky top-0">
-        <SidebarContent organizations={organizations} currentOrgId={currentOrgId} />
+        <SidebarContent
+          organizations={organizations}
+          currentOrgId={currentOrgId}
+          queryCount={queryCount}
+          queryLimit={queryLimit}
+        />
       </div>
 
       {/* Mobile Sidebar */}
@@ -101,7 +135,12 @@ export function Sidebar({ organizations, currentOrgId }: any) {
             <Menu className="h-5 w-5" />
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-64 border-r-0">
-            <SidebarContent organizations={organizations} currentOrgId={currentOrgId} />
+            <SidebarContent
+              organizations={organizations}
+              currentOrgId={currentOrgId}
+              queryCount={queryCount}
+              queryLimit={queryLimit}
+            />
           </SheetContent>
         </Sheet>
       </div>

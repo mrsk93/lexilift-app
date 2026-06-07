@@ -26,6 +26,9 @@ export const organizations = pgTable('organizations', {
   createdBy: uuid('created_by').notNull(), // Supabase auth.users.id
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  llmModel: text('llm_model').default('gpt-4o'),
+  documentsCount: integer('documents_count').default(0),
+  dataRegion: text('data_region').default('us'),
 });
 
 export const memberships = pgTable(
@@ -77,6 +80,8 @@ export const documents = pgTable('documents', {
   sourceUrl: text('source_url'),
   status: text('status').default('processing'), // processing | ready | failed
   errorMessage: text('error_message'),
+  sha256: text('sha256'),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
   chunkCount: integer('chunk_count').default(0),
   fileSize: bigint('file_size', { mode: 'number' }),
   uploadedBy: uuid('uploaded_by').notNull(),

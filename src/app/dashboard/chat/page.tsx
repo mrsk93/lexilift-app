@@ -1,7 +1,9 @@
 import { ChatWindow } from '@/components/chat/ChatWindow'
+import { getCurrentOrgId } from '@/lib/auth/current-org'
 
-export default function ChatPage() {
-  const orgId = "mock-org-id" // Replace with real org ID
+export default async function ChatPage() {
+  const orgId = await getCurrentOrgId()
+  if (!orgId) return null
 
   return (
     <div className="space-y-4">
