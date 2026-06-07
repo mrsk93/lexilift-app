@@ -54,6 +54,13 @@ export async function POST(req: Request) {
 
     const llmMessages: Array<{ role: ChatRole; content: string }> = [
       { role: 'system', content: 'You are a helpful, professional AI assistant for LexiLift.' },
+      // Prepend a synthetic greeting turn. AI SDK v6's streamText produces
+      // empty/useless responses when the messages array contains only
+      // (system, user) with no prior conversation. By always starting the
+      // LLM thread with a benign 'Hi' exchange, the model responds normally.
+      // The 'previous turns' from the real chat follow below.
+      { role: 'user', content: 'Hi' },
+      { role: 'assistant', content: 'Hello! How can I help you today?' },
       ...messages.slice(0, -1).map((m: IncomingMessage) => ({
         role: ((m.role as ChatRole) ?? 'user'),
         content: extractText(m),
