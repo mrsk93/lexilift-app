@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db/client'
-import { organizations } from '@/lib/db/schema'
+import { organizations, invoices } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { env } from '@/lib/env'
 import { verifyPolarSignature, parsePolarEvent } from '@/lib/billing/polar-webhook'
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     if (event.type === 'subscription.created' || event.type === 'subscription.updated') {
       const orgId = event.data.metadata?.orgId
       if (orgId) {
-        const statusPlan = STATUS_PLAN[event.data.status] ?? 'starter'
+        const statusPlan = STATUS_PLAN[event.data.status ?? ''] ?? 'starter'
         const isPro = env.POLAR_PRO_PRODUCT_ID === event.data.product_id
         const isTeam = env.POLAR_TEAM_PRODUCT_ID === event.data.product_id
         const newPlan = isPro ? 'pro' : isTeam ? 'team' : statusPlan
@@ -40,6 +40,22 @@ export async function POST(req: Request) {
       const orgId = event.data.metadata?.orgId
       if (orgId) {
         await db.update(organizations).set({ plan: 'starter', queryLimit: 500 }).where(eq(organizations.id, orgId))
+      }
+    } else if (event.type === 'order.created' || event.type === 'order.paid') {
+      const orgId = event.data.metadata?.orgId
+      if (orgId && typeof event.data.total_amount === 'number' && typeof event.data.currency === 'string') {
+        await db.insert(invoices).values({
+          id: event.data.id,
+          orgId,
+          amountCents: event.data.total_amount,
+          currency: event.data.currency,
+          invoiceStatus: event.data.status ?? event.type,
+          hostedUrl: null,
+          pdfUrl: null,
+        }).onConflictDoUpdate({
+          target: invoices.id,
+          set: { invoiceStatus: event.data.status ?? event.type },
+        })
       }
     }
 

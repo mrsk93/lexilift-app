@@ -14,17 +14,19 @@ export async function verifyPolarSignature(
   }
 }
 
-export interface PolarSubscriptionEvent {
+export interface PolarEvent {
   type: string
   data: {
     id: string
-    customer_id: string
-    product_id: string
-    status: string
+    status?: string
+    customer_id?: string
+    product_id?: string
+    total_amount?: number
+    currency?: string
     metadata?: { orgId?: string }
   }
 }
 
-export function parsePolarEvent(payload: string): PolarSubscriptionEvent {
+export function parsePolarEvent(payload: string): PolarEvent {
   return JSON.parse(payload)
 }
