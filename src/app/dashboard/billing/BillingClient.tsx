@@ -23,6 +23,7 @@ interface BillingClientProps {
 
 export function BillingClient({ org, documentsUsed, widgetsUsed }: BillingClientProps) {
   const [loading, setLoading] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
 
   const currentPlan = (org.plan as PlanId) ?? 'starter'
   const queryLimit = org.queryLimit ?? PLAN_LIMITS[currentPlan].queries
@@ -39,6 +40,22 @@ export function BillingClient({ org, documentsUsed, widgetsUsed }: BillingClient
       console.error('Checkout failed', err)
       toast.error('Could not start checkout. Please try again.')
       setLoading(false)
+    }
+  }
+
+  const openPortal = async () => {
+    setPortalLoading(true)
+    try {
+      const r = await fetch('/api/billing/portal', { method: 'POST' })
+      if (!r.ok) {
+        const { error } = await r.json().catch(() => ({ error: 'Portal unavailable' }))
+        throw new Error(error)
+      }
+      const { url } = await r.json()
+      window.location.href = url
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not open portal')
+      setPortalLoading(false)
     }
   }
 
@@ -107,9 +124,10 @@ export function BillingClient({ org, documentsUsed, widgetsUsed }: BillingClient
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => toast.info('Manage billing coming soon.')}
+                onClick={openPortal}
+                disabled={portalLoading}
               >
-                Manage Billing
+                {portalLoading ? 'Opening…' : 'Manage Billing'}
               </Button>
             </CardFooter>
           </Card>

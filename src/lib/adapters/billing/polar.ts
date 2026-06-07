@@ -1,5 +1,8 @@
 import { Polar } from '@polar-sh/sdk'
 import { env } from '@/lib/env'
+import { db } from '@/lib/db/client'
+import { organizations } from '@/lib/db/schema'
+import { eq } from 'drizzle-orm'
 
 export class PolarAdapter {
   private polar: Polar
@@ -28,6 +31,32 @@ export class PolarAdapter {
     } catch (error) {
       console.error('Failed to create Polar checkout', error)
       throw error
+    }
+  }
+
+  async createPortalSession(orgId: string): Promise<string> {
+    if (!env.POLAR_ACCESS_TOKEN) {
+      return `https://polar.sh/mock-portal/${orgId}?mock=true`
+    }
+
+    const [org] = await db
+      .select({ polarCustomerId: organizations.polarCustomerId })
+      .from(organizations)
+      .where(eq(organizations.id, orgId))
+      .limit(1)
+
+    if (!org?.polarCustomerId) {
+      throw new Error('NO_CUSTOMER')
+    }
+
+    try {
+      const session = await this.polar.customerSessions.create({
+        customerId: org.polarCustomerId,
+      })
+      return session.customerPortalUrl
+    } catch (error) {
+      console.error('Failed to create Polar portal session', error)
+      throw new Error('PORTAL_FAILED')
     }
   }
 
