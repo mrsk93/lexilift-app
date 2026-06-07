@@ -9,6 +9,7 @@ import { DeleteDocButton } from './DeleteDocButton'
 import { RestoreButton } from './RestoreButton'
 import { ReprocessButton } from './ReprocessButton'
 import { BulkActionsBar } from './BulkActionsBar'
+import { DocumentFilters, type DocFilter } from './DocumentFilters'
 
 export interface DocRow {
   id: string
@@ -30,10 +31,21 @@ export function DocumentList({
   const [docs, setDocs] = useState<DocRow[]>(initialDocs)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
+  const [filters, setFilters] = useState<DocFilter>({})
 
   const isProcessing = (d: DocRow) => d.status !== 'ready' && d.status !== 'failed'
   const hasProcessing = !trashed && docs.some(isProcessing)
   const allSelected = docs.length > 0 && selected.size === docs.length
+
+  const availableFileTypes = Array.from(
+    new Set(docs.map((d) => d.fileType).filter((t): t is string => !!t))
+  )
+
+  const filtered = docs.filter((d) => {
+    if (filters.status && d.status !== filters.status) return false
+    if (filters.fileType && d.fileType !== filters.fileType) return false
+    return true
+  })
 
   useEffect(() => {
     if (!hasProcessing) return
@@ -116,6 +128,16 @@ export function DocumentList({
 
   return (
     <>
+      <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+        <DocumentFilters
+          value={filters}
+          onChange={setFilters}
+          availableFileTypes={availableFileTypes}
+        />
+        <span className="text-xs text-muted-foreground">
+          Showing {filtered.length} of {docs.length}
+        </span>
+      </div>
       <div className="border border-border rounded-lg bg-card overflow-hidden">
         <Table>
           <TableHeader>
@@ -139,62 +161,73 @@ export function DocumentList({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {docs.map((d) => (
-              <TableRow key={d.id} data-state={selected.has(d.id) ? 'selected' : undefined}>
-                {!trashed && (
-                  <TableCell>
-                    <input
-                      type="checkbox"
-                      aria-label={`Select ${d.name}`}
-                      checked={selected.has(d.id)}
-                      onChange={() => toggleOne(d.id)}
-                      className="h-4 w-4 rounded border-input"
-                    />
-                  </TableCell>
-                )}
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{d.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={d.status} />
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {d.fileSize ? (d.fileSize / 1024 / 1024).toFixed(2) + ' MB' : '—'}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '—'}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex gap-2 justify-end">
-                    {trashed ? (
-                      <RestoreButton
-                        id={d.id}
-                        onRestored={() => {
-                          setDocs((prev) => prev.filter((x) => x.id !== d.id))
-                        }}
-                      />
-                    ) : (
-                      <>
-                        {d.status === 'failed' && (
-                          <ReprocessButton
-                            id={d.id}
-                            onReprocessed={() => {
-                              setDocs((prev) =>
-                                prev.map((x) => (x.id === d.id ? { ...x, status: 'processing' } : x))
-                              )
-                            }}
-                          />
-                        )}
-                        <DeleteDocButton id={d.id} />
-                      </>
-                    )}
-                  </div>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={trashed ? 5 : 6}
+                  className="text-center text-muted-foreground py-8"
+                >
+                  No documents match the current filters.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filtered.map((d) => (
+                <TableRow key={d.id} data-state={selected.has(d.id) ? 'selected' : undefined}>
+                  {!trashed && (
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${d.name}`}
+                        checked={selected.has(d.id)}
+                        onChange={() => toggleOne(d.id)}
+                        className="h-4 w-4 rounded border-input"
+                      />
+                    </TableCell>
+                  )}
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <span className="font-medium">{d.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={d.status} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {d.fileSize ? (d.fileSize / 1024 / 1024).toFixed(2) + ' MB' : '—'}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '—'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-2 justify-end">
+                      {trashed ? (
+                        <RestoreButton
+                          id={d.id}
+                          onRestored={() => {
+                            setDocs((prev) => prev.filter((x) => x.id !== d.id))
+                          }}
+                        />
+                      ) : (
+                        <>
+                          {d.status === 'failed' && (
+                            <ReprocessButton
+                              id={d.id}
+                              onReprocessed={() => {
+                                setDocs((prev) =>
+                                  prev.map((x) => (x.id === d.id ? { ...x, status: 'processing' } : x))
+                                )
+                              }}
+                            />
+                          )}
+                          <DeleteDocButton id={d.id} />
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
