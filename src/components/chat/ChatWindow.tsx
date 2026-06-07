@@ -1,7 +1,8 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { useState, useRef, useEffect } from 'react'
+import { DefaultChatTransport } from 'ai'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { MessageBubble } from './MessageBubble'
@@ -25,41 +26,26 @@ export function ChatWindow({
   const router = useRouter()
   const [model, setModel] = useState<ModelId>(initialModel)
   const [title, setTitle] = useState<string>(initialTitle ?? 'New chat')
+  const [input, setInput] = useState('')
   const titledOnce = useRef(false)
 
-  // useChat v2/v3 API drift: `body`, `initialMessages`, and the destructured
-  // helpers (`input`, `isLoading`, `handleSubmit`, etc.) are not in v3 types.
-  // Pre-existing concern; keep this surface compatible until the hook usage is
-  // migrated wholesale.
-  const chat = useChat({
-    api: '/api/query',
-    body: {
-      orgId,
-      sessionId,
-      modelName: model,
-    },
-    initialMessages: [
-      { id: '1', role: 'assistant', content: 'Hello! Ask me anything about your documents.' }
-    ]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any) as any
-
-  const {
-    messages,
-    input,
-    setInput,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    stop,
-    regenerate,
-    reload,
-    status,
-  } = chat
-
-  const streaming: boolean = Boolean(
-    isLoading || status === 'streaming' || status === 'submitted'
+  // AI SDK v6: transport is the new way to configure endpoint + body.
+  // Re-create when the model changes so the body sent to the server is fresh.
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: '/api/query',
+        body: { orgId, sessionId, modelName: model },
+      }),
+    [orgId, sessionId, model]
   )
+
+  const { messages, sendMessage, status, stop, regenerate, error } = useChat({
+    transport,
+  })
+
+  const streaming: boolean =
+    status === 'streaming' || status === 'submitted'
 
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -67,19 +53,27 @@ export function ChatWindow({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error.message ?? 'Chat error')
+    }
+  }, [error])
+
   const onFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const text = input.trim()
+    if (!text || streaming) return
+
+    // Optimistically clear input so the user can keep typing
+    setInput('')
+
     if (!sessionId || titledOnce.current || title !== 'New chat') {
-      handleSubmit?.(e)
+      sendMessage({ text })
       return
     }
-    const submitted = input?.trim() ?? ''
-    if (!submitted) {
-      handleSubmit?.(e)
-      return
-    }
+    const newTitle = deriveTitle(text)
     titledOnce.current = true
-    handleSubmit?.(e)
-    const newTitle = deriveTitle(submitted)
+    sendMessage({ text })
     try {
       const r = await fetch(`/api/chat/sessions/${sessionId}/title`, {
         method: 'PATCH',
@@ -95,8 +89,6 @@ export function ChatWindow({
   const onRegenerate = () => {
     if (typeof regenerate === 'function') {
       regenerate()
-    } else if (typeof reload === 'function') {
-      reload()
     } else {
       toast.error('Regenerate is unavailable')
     }
@@ -143,14 +135,20 @@ export function ChatWindow({
         )}
       </header>
       <div className="flex-1 overflow-y-auto">
-        {messages.map((m: { id?: string; role: string; content: string }, i: number) => (
+        {messages.length === 0 && (
+          <div className="p-6 text-sm text-muted-foreground">
+            Ask me anything about your documents.
+          </div>
+        )}
+        {messages.map((m, i) => (
           <MessageBubble
             key={m.id ?? i}
-            message={m}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            message={m as any}
             isStreaming={streaming && i === messages.length - 1}
             onRegenerate={onRegenerate}
             onStop={onStop}
-            onEdit={() => onEdit(m.id, m.content)}
+            onEdit={() => onEdit(m.id, '')}
           />
         ))}
         {streaming && (
@@ -167,14 +165,8 @@ export function ChatWindow({
           className="relative flex items-center max-w-4xl mx-auto"
         >
           <input
-            value={input || ''}
-            onChange={(e) => {
-              if (handleInputChange) {
-                handleInputChange(e);
-              } else if (setInput) {
-                setInput(e.target.value);
-              }
-            }}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
             placeholder="Ask a question..."
             className="w-full bg-muted/50 border border-border rounded-full pl-6 pr-14 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
             disabled={streaming}
@@ -183,7 +175,7 @@ export function ChatWindow({
             type="submit"
             size="icon"
             className="absolute right-2 rounded-full h-10 w-10"
-            disabled={streaming || !input?.trim()}
+            disabled={streaming || !input.trim()}
           >
             <Send className="w-4 h-4" />
           </Button>
