@@ -1,31 +1,39 @@
 import { db } from '@/lib/db/client'
 import { documents } from '@/lib/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { and, eq, isNull, isNotNull, desc } from 'drizzle-orm'
 import { getCurrentOrgId } from '@/lib/auth/current-org'
 import { UploadDropzone } from '@/components/documents/UploadDropzone'
 import { UrlIngestForm } from '@/components/documents/UrlIngestForm'
-import { DocumentList, type DocRow } from '@/components/documents/DocumentList'
+import { DocumentsView } from '@/components/documents/DocumentsView'
+import { type DocRow } from '@/components/documents/DocumentList'
 
 export default async function DocumentsPage() {
   const orgId = await getCurrentOrgId()
   if (!orgId) return null
 
-  const docs = await db
+  const liveRows = await db
     .select()
     .from(documents)
-    .where(eq(documents.orgId, orgId))
+    .where(and(eq(documents.orgId, orgId), isNull(documents.deletedAt)))
     .orderBy(desc(documents.createdAt))
 
-  const initialDocs: DocRow[] = docs
-    .filter((d) => d.deletedAt == null)
-    .map((d) => ({
-      id: d.id,
-      name: d.name,
-      status: d.status ?? 'processing',
-      fileType: d.fileType,
-      fileSize: d.fileSize,
-      createdAt: d.createdAt ?? new Date(),
-    }))
+  const trashedRows = await db
+    .select()
+    .from(documents)
+    .where(and(eq(documents.orgId, orgId), isNotNull(documents.deletedAt)))
+    .orderBy(desc(documents.createdAt))
+
+  const toDocRow = (d: (typeof liveRows)[number]): DocRow => ({
+    id: d.id,
+    name: d.name,
+    status: d.status ?? 'processing',
+    fileType: d.fileType,
+    fileSize: d.fileSize,
+    createdAt: d.createdAt ?? new Date(),
+  })
+
+  const live = liveRows.map(toDocRow)
+  const trashed = trashedRows.map(toDocRow)
 
   return (
     <div className="space-y-8">
@@ -44,7 +52,7 @@ export default async function DocumentsPage() {
 
       <div className="space-y-4">
         <h3 className="text-lg font-heading font-semibold">Your Files</h3>
-        <DocumentList initialDocs={initialDocs} />
+        <DocumentsView live={live} trashed={trashed} />
       </div>
     </div>
   )
