@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { FileText } from 'lucide-react'
+import { toast } from 'sonner'
 import { StatusBadge } from './StatusBadge'
 import { DeleteDocButton } from './DeleteDocButton'
+import { BulkActionsBar } from './BulkActionsBar'
 
 export interface DocRow {
   id: string
@@ -18,9 +20,12 @@ export interface DocRow {
 export function DocumentList({ initialDocs }: { initialDocs: DocRow[] }) {
   const router = useRouter()
   const [docs, setDocs] = useState<DocRow[]>(initialDocs)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   const isProcessing = (d: DocRow) => d.status !== 'ready' && d.status !== 'failed'
   const hasProcessing = docs.some(isProcessing)
+  const allSelected = docs.length > 0 && selected.size === docs.length
 
   useEffect(() => {
     if (!hasProcessing) return
@@ -51,6 +56,48 @@ export function DocumentList({ initialDocs }: { initialDocs: DocRow[] }) {
     }
   }, [hasProcessing, router])
 
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(docs.map((d) => d.id)))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selected.size === 0 || bulkLoading) return
+    setBulkLoading(true)
+    try {
+      const r = await fetch('/api/documents/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      })
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}))
+        toast.error(j.error ?? 'Bulk delete failed')
+        return
+      }
+      const removed = Array.from(selected)
+      setDocs((prev) => prev.filter((d) => !selected.has(d.id)))
+      setSelected(new Set())
+      toast.success(`${removed.length} document${removed.length === 1 ? '' : 's'} moved to trash`)
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
   if (docs.length === 0) {
     return (
       <div className="border border-border rounded-lg bg-card p-8 text-center text-muted-foreground text-sm">
@@ -60,42 +107,69 @@ export function DocumentList({ initialDocs }: { initialDocs: DocRow[] }) {
   }
 
   return (
-    <div className="border border-border rounded-lg bg-card overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/50 hover:bg-muted/50">
-            <TableHead>Name</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Size</TableHead>
-            <TableHead>Uploaded</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {docs.map((d) => (
-            <TableRow key={d.id}>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <span className="font-medium">{d.name}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <StatusBadge status={d.status} />
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {d.fileSize ? (d.fileSize / 1024 / 1024).toFixed(2) + ' MB' : '—'}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '—'}
-              </TableCell>
-              <TableCell>
-                <DeleteDocButton id={d.id} />
-              </TableCell>
+    <>
+      <div className="border border-border rounded-lg bg-card overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableHead className="w-[40px]">
+                <input
+                  type="checkbox"
+                  aria-label="Select all"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  className="h-4 w-4 rounded border-input"
+                />
+              </TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Size</TableHead>
+              <TableHead>Uploaded</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {docs.map((d) => (
+              <TableRow key={d.id} data-state={selected.has(d.id) ? 'selected' : undefined}>
+                <TableCell>
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${d.name}`}
+                    checked={selected.has(d.id)}
+                    onChange={() => toggleOne(d.id)}
+                    className="h-4 w-4 rounded border-input"
+                  />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <span className="font-medium">{d.name}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={d.status} />
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {d.fileSize ? (d.fileSize / 1024 / 1024).toFixed(2) + ' MB' : '—'}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '—'}
+                </TableCell>
+                <TableCell>
+                  <DeleteDocButton id={d.id} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      {selected.size > 0 && (
+        <BulkActionsBar
+          count={selected.size}
+          onDelete={handleBulkDelete}
+          onClear={() => setSelected(new Set())}
+        />
+      )}
+    </>
   )
 }
