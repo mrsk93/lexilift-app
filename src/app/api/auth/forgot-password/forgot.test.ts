@@ -26,6 +26,9 @@ vi.mock('@/lib/env', () => ({
 
 vi.mock('next/headers', () => ({
   cookies: vi.fn().mockResolvedValue(mockCookieStore),
+  headers: vi.fn().mockResolvedValue({
+    get: vi.fn().mockReturnValue(null),
+  }),
 }))
 
 vi.mock('@supabase/ssr', () => ({ createServerClient: mockCreateServerClient }))

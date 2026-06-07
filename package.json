@@ -27,6 +27,8 @@
     "@react-email/components": "^1.0.12",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "ai": "^6.0.191",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
