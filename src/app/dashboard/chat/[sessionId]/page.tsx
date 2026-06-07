@@ -1,7 +1,7 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq } from 'drizzle-orm'
 import { getCurrentProfile } from '@/lib/auth/org-utils'
 import { db } from '@/lib/db/client'
-import { chatSessions } from '@/lib/db/schema'
+import { chatMessages, chatSessions } from '@/lib/db/schema'
 import { ChatWindow } from '@/components/chat/ChatWindow'
 import { NewChatButton } from '@/components/chat/NewChatButton'
 import { SessionList, type Session } from '@/components/chat/SessionList'
@@ -59,6 +59,32 @@ export default async function ChatSessionPage({
     createdAt: s.createdAt,
   }))
 
+  // Load persisted messages in chronological order and shape them as
+  // AI SDK v6 UIMessages so ChatWindow can hydrate useChat on mount.
+  const messageRows = await db
+    .select({
+      id: chatMessages.id,
+      role: chatMessages.role,
+      content: chatMessages.content,
+      citations: chatMessages.citations,
+      feedback: chatMessages.feedback,
+    })
+    .from(chatMessages)
+    .where(eq(chatMessages.sessionId, sessionId))
+    .orderBy(asc(chatMessages.createdAt))
+
+  const initialMessages = messageRows.map((m) => ({
+    id: m.id,
+    role: (m.role === 'user' || m.role === 'assistant' ? m.role : 'assistant') as
+      | 'user'
+      | 'assistant',
+    parts: [{ type: 'text' as const, text: m.content }],
+    metadata: {
+      citations: Array.isArray(m.citations) ? m.citations : undefined,
+      feedback: m.feedback ?? undefined,
+    },
+  }))
+
   return (
     <div className="flex h-[calc(100vh-7rem)] gap-0 -m-4 md:-m-6 lg:-m-8">
       <aside className="w-64 border-r p-4 space-y-3 overflow-y-auto hidden md:flex md:flex-col bg-muted/30">
@@ -71,6 +97,7 @@ export default async function ChatSessionPage({
           sessionId={sessionId}
           model={(session.llmModel ?? 'gpt-4o') as ModelId}
           title={session.title}
+          initialMessages={initialMessages}
         />
       </main>
     </div>

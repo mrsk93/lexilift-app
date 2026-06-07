@@ -1,6 +1,6 @@
 'use client'
 
-import { useChat } from '@ai-sdk/react'
+import { useChat, type UIMessage } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
@@ -17,11 +17,15 @@ export function ChatWindow({
   sessionId,
   model: initialModel = 'gpt-4o',
   title: initialTitle = 'New chat',
+  initialMessages,
 }: {
   orgId: string
   sessionId?: string
   model?: ModelId
   title?: string | null
+  /** Persisted messages for the session. Shapes them into v6 UIMessages
+   *  so the chat hydrates with prior turns instead of starting empty. */
+  initialMessages?: UIMessage[]
 }) {
   const router = useRouter()
   const [model, setModel] = useState<ModelId>(initialModel)
@@ -41,7 +45,9 @@ export function ChatWindow({
   )
 
   const { messages, sendMessage, status, stop, regenerate, error } = useChat({
+    id: sessionId, // re-use the same chat id so resume/regenerate work per session
     transport,
+    messages: initialMessages, // hydrate from server-side history (v6 ChatInit)
   })
 
   const streaming: boolean =

@@ -4,6 +4,7 @@ import { Bot, User } from 'lucide-react'
 import { CitationCard } from './CitationCard'
 import { FeedbackButtons } from './FeedbackButtons'
 import { MessageActions } from './MessageActions'
+import { getMessageText } from '@/lib/chat/message-text'
 
 export function MessageBubble({
   message,
@@ -44,7 +45,7 @@ export function MessageBubble({
       <div className="flex-1 space-y-4">
         <div className="prose prose-sm dark:prose-invert max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {message.content}
+            {getMessageText(message)}
           </ReactMarkdown>
         </div>
 
