@@ -11,6 +11,7 @@ import { getVectorStore } from '@/lib/adapters/vector-store/pinecone'
 import { OpenAIEmbeddings } from '@langchain/openai'
 import { env } from '@/lib/env'
 import { v4 as uuidv4 } from 'uuid'
+import { trackServerEvent } from '@/lib/analytics/posthog-server'
 
 const DIM = 1536
 
@@ -117,6 +118,16 @@ export const processDocument = inngest.createFunction(
         .set({ status: 'ready', chunkCount: chunks.length })
         .where(eq(documents.id, docId))
     )
+
+    await trackServerEvent({
+      distinctId: doc.uploadedBy,
+      event: 'document.uploaded',
+      properties: {
+        orgId: doc.orgId,
+        documentId: doc.id,
+        fileType: doc.fileType,
+      },
+    })
 
     return { docId, chunkCount: chunks.length }
   }
