@@ -10,7 +10,9 @@ export default defineConfig({
     setupFiles: './vitest.setup.ts',
     exclude: ['**/node_modules/**', '**/e2e/**', '**/.next/**'],
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': path.resolve(__dirname, './src'),
+      // Stub 'server-only' in tests: it throws in node context but is a no-op in real Next.js builds
+      'server-only': path.resolve(__dirname, 'node_modules/server-only/empty.js'),
     },
     coverage: {
       provider: 'v8',

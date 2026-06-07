@@ -1,7 +1,8 @@
 import { and, count, eq, isNull } from 'drizzle-orm'
 import { db } from '@/lib/db/client'
 import { documents, organizations, widgetTokens } from '@/lib/db/schema'
-import { getOrgPlan, PLAN_LIMITS, type PlanId } from './plans'
+import { getOrgPlan } from './plans'
+import { PLAN_LIMITS, type PlanId } from './plans-data'
 
 export type PlanResource = 'documents' | 'queries' | 'widgets'
 

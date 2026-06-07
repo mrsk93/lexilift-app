@@ -2,7 +2,7 @@
 import { CheckCircle2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import type { PlanId } from '@/lib/billing/plans'
+import type { PlanId } from '@/lib/billing/plans-data'
 
 const COPY: Record<PlanId, { title: string; price: string; perks: string[]; cta: string; highlighted?: boolean }> = {
   starter:    { title: 'Starter',     price: '$0',    perks: ['10 documents', '500 queries / mo', '1 widget', 'Standard support'], cta: 'Current Plan' },

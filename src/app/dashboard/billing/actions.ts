@@ -3,7 +3,7 @@
 import { getBilling } from '@/lib/adapters/billing/polar'
 import { getCurrentProfile } from '@/lib/auth/org-utils'
 import { env } from '@/lib/env'
-import type { PlanId } from '@/lib/billing/plans'
+import type { PlanId } from '@/lib/billing/plans-data'
 
 export async function createProCheckoutAction() {
   return createCheckoutAction('pro')

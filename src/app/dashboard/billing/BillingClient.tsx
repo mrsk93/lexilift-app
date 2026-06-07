@@ -8,8 +8,7 @@ import { UsageGauge } from '@/components/billing/UsageGauge'
 import { PlanCard } from '@/components/billing/PlanCard'
 import { createCheckoutAction } from './actions'
 import { toast } from 'sonner'
-import type { PlanId } from '@/lib/billing/plans'
-import { PLAN_LIMITS } from '@/lib/billing/plans'
+import type { PlanId } from '@/lib/billing/plans-data'
 
 interface BillingClientProps {
   org: {
@@ -18,18 +17,26 @@ interface BillingClientProps {
     queryLimit: number | null
   }
   documentsUsed: number
+  documentsLimit: number
   widgetsUsed: number
+  widgetsLimit: number
 }
 
-export function BillingClient({ org, documentsUsed, widgetsUsed }: BillingClientProps) {
+export function BillingClient({
+  org,
+  documentsUsed,
+  documentsLimit,
+  widgetsUsed,
+  widgetsLimit,
+}: BillingClientProps) {
   const [loading, setLoading] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
 
   const currentPlan = (org.plan as PlanId) ?? 'starter'
-  const queryLimit = org.queryLimit ?? PLAN_LIMITS[currentPlan].queries
+  const queryLimit = org.queryLimit ?? 500
   const queryCount = org.queryCount ?? 0
-  const docLimit = PLAN_LIMITS[currentPlan].documents
-  const widgetLimit = PLAN_LIMITS[currentPlan].widgets
+  const docLimit = documentsLimit
+  const widgetLimit = widgetsLimit
 
   const onSelect = async (plan: PlanId) => {
     setLoading(true)

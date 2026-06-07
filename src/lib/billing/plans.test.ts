@@ -3,9 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 
-vi.mock('@/lib/db/client', () => ({ db: {} }))
-
-import { PLAN_LIMITS, assertWithinLimit } from './plans'
+import { PLAN_LIMITS, assertWithinLimit } from './plans-data'
 
 describe('plan limits', () => {
   it('starter has documents=10', () => {

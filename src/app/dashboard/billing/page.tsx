@@ -6,6 +6,7 @@ import { requireAuth, requireOrgAccess } from '@/lib/auth/org-utils'
 import { getCurrentOrgId } from '@/lib/auth/current-org'
 import { BillingClient } from './BillingClient'
 import { InvoiceList } from '@/components/billing/InvoiceList'
+import { PLAN_LIMITS, type PlanId } from '@/lib/billing/plans'
 
 export default async function BillingPage() {
   await requireAuth()
@@ -47,6 +48,9 @@ export default async function BillingPage() {
     queryLimit: org?.queryLimit ?? 500,
   }
 
+  const currentPlan = (orgData.plan as PlanId) ?? 'starter'
+  const planLimits = PLAN_LIMITS[currentPlan]
+
   const mappedInvoices = invoiceRows.map((i) => ({
     id: i.id,
     amountCents: i.amountCents,
@@ -63,7 +67,9 @@ export default async function BillingPage() {
         <BillingClient
           org={orgData}
           documentsUsed={Number(docsRow?.value ?? 0)}
+          documentsLimit={planLimits.documents}
           widgetsUsed={Number(widgetsRow?.value ?? 0)}
+          widgetsLimit={planLimits.widgets}
         />
         <div>
           <h3 className="text-xl font-heading font-bold mb-4">Invoice History</h3>
