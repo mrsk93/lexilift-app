@@ -11,27 +11,27 @@ vi.mock('@/lib/auth/supabase/middleware', () => ({
   }),
 }))
 
-import { middleware } from './middleware'
+import { proxy } from './proxy'
 
 const makeReq = (url: string) =>
   new NextRequest(new Request(url)) as unknown as NextRequest
 
-describe('middleware', () => {
+describe('proxy', () => {
   it('redirects unauthenticated users from /dashboard', async () => {
     mockGetUser.mockResolvedValue(null)
-    const res = await middleware(makeReq('http://localhost/dashboard'))
+    const res = await proxy(makeReq('http://localhost/dashboard'))
     expect(res.headers.get('location')).toContain('/login')
   })
 
   it('allows access to /login', async () => {
     mockGetUser.mockResolvedValue(null)
-    const res = await middleware(makeReq('http://localhost/login'))
+    const res = await proxy(makeReq('http://localhost/login'))
     expect(res.headers.get('location')).toBeNull()
   })
 
   it('allows /widget/* and /api/widget/* without auth', async () => {
     mockGetUser.mockResolvedValue(null)
-    const res = await middleware(makeReq('http://localhost/widget/abc'))
+    const res = await proxy(makeReq('http://localhost/widget/abc'))
     expect(res.headers.get('location')).toBeNull()
   })
 })

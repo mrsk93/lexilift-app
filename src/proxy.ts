@@ -8,7 +8,7 @@ const PUBLIC_PREFIXES = [
   '/_next', '/favicon',
 ]
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const response = await updateSession(request)
   const { pathname } = request.nextUrl
 

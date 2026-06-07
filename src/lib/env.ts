@@ -41,8 +41,11 @@ function parseServer() {
   const parsed = serverSchema.safeParse(process.env)
   if (!parsed.success) {
     const missing = parsed.error.issues
-      .filter((i) => i.code === 'invalid_type' && i.input === undefined)
-      .map((i) => `  - ${i.path.join('.')}`)
+      .map((i) => {
+        const path = i.path.join('.') || '(root)'
+        const suffix = i.input === undefined ? ' (missing)' : ''
+        return `  - ${path}${suffix}`
+      })
       .join('\n')
     throw new Error(
       `Invalid environment variables:\n${missing}\n\nSee docs/superpowers/specs/2026-06-06-lexilift-mvp-gap-fill-design.md §6.4 for the full list.`,
