@@ -3,8 +3,21 @@ import remarkGfm from 'remark-gfm'
 import { Bot, User } from 'lucide-react'
 import { CitationCard } from './CitationCard'
 import { FeedbackButtons } from './FeedbackButtons'
+import { MessageActions } from './MessageActions'
 
-export function MessageBubble({ message }: { message: any }) {
+export function MessageBubble({
+  message,
+  isStreaming = false,
+  onRegenerate,
+  onStop,
+  onEdit,
+}: {
+  message: any
+  isStreaming?: boolean
+  onRegenerate?: () => void
+  onStop?: () => void
+  onEdit?: () => void
+}) {
   const isUser = message.role === 'user'
   const citations: Array<{
     index?: number
@@ -16,6 +29,9 @@ export function MessageBubble({ message }: { message: any }) {
 
   const messageId: string | undefined = message.id
   const feedback: 'thumbs_up' | 'thumbs_down' | null = message.feedback ?? null
+
+  const hasActions = Boolean(onRegenerate || onStop || onEdit)
+  const showFooter = (!isUser && messageId) || (messageId && hasActions)
 
   return (
     <div className={`flex gap-4 p-6 ${isUser ? 'bg-transparent' : 'bg-muted/30 border-y border-border'}`}>
@@ -50,9 +66,20 @@ export function MessageBubble({ message }: { message: any }) {
           </div>
         )}
 
-        {!isUser && messageId && (
+        {showFooter && (
           <div className="flex items-center gap-3 pt-2 border-t border-border/50">
-            <FeedbackButtons messageId={messageId} initial={feedback} />
+            {!isUser && messageId && (
+              <FeedbackButtons messageId={messageId} initial={feedback} />
+            )}
+            {messageId && hasActions && (
+              <MessageActions
+                role={message.role}
+                isStreaming={isStreaming}
+                onRegenerate={onRegenerate ?? (() => {})}
+                onStop={onStop ?? (() => {})}
+                onEdit={onEdit ?? (() => {})}
+              />
+            )}
           </div>
         )}
       </div>
