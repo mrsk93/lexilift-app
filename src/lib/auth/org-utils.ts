@@ -53,3 +53,20 @@ export async function requireOrgAccess(orgId: string) {
   if (!hasAccess) throw new Error('Forbidden')
   return user
 }
+
+export async function getMembershipContext(orgId: string) {
+  const user = await requireAuth()
+  const role = await getUserRole(orgId, user.id)
+  if (!role) throw new Error('Forbidden')
+  return { userId: user.id, orgId, role }
+}
+
+export async function requireOrgMember(orgId: string) {
+  return getMembershipContext(orgId)
+}
+
+export async function requireOrgAdmin(orgId: string) {
+  const ctx = await getMembershipContext(orgId)
+  if (ctx.role !== 'owner' && ctx.role !== 'admin') throw new Error('Forbidden')
+  return ctx
+}
