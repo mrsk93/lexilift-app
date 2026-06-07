@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { FileText, MessageSquare, Settings, Users, CreditCard, LayoutDashboard, Code, Menu, LogOut } from 'lucide-react'
 import { OrgSwitcher } from './OrgSwitcher'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useState } from 'react'
@@ -80,6 +81,11 @@ function SidebarContent({
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">
             {queryCount} / {queryLimit} Queries
           </p>
+        </div>
+
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs text-sidebar-foreground/60 font-mono uppercase tracking-wider">Theme</span>
+          <ThemeToggle />
         </div>
 
         <button
