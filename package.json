@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "tsx src/lib/db/migrate.ts",
     "dev": "next dev",
     "dev:inngest": "npx inngest-cli@latest dev -u http://localhost:3000/api/inngest",
     "dev:all": "concurrently -n next,inngest,db -c blue,magenta,green \"npm:dev\" \"npm:dev:inngest\" \"npm:dev:db\"",
+    "prebuild": "tsx src/lib/db/migrate.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
