@@ -2,6 +2,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Bot, User } from 'lucide-react'
 import { CitationCard } from './CitationCard'
+import { FeedbackButtons } from './FeedbackButtons'
 
 export function MessageBubble({ message }: { message: any }) {
   const isUser = message.role === 'user'
@@ -12,6 +13,9 @@ export function MessageBubble({ message }: { message: any }) {
     excerpt?: string | null
     pageNum?: number | null
   }> = message.metadata?.citations || message.citations || []
+
+  const messageId: string | undefined = message.id
+  const feedback: 'thumbs_up' | 'thumbs_down' | null = message.feedback ?? null
 
   return (
     <div className={`flex gap-4 p-6 ${isUser ? 'bg-transparent' : 'bg-muted/30 border-y border-border'}`}>
@@ -43,6 +47,12 @@ export function MessageBubble({ message }: { message: any }) {
                 />
               ))}
             </div>
+          </div>
+        )}
+
+        {!isUser && messageId && (
+          <div className="flex items-center gap-3 pt-2 border-t border-border/50">
+            <FeedbackButtons messageId={messageId} initial={feedback} />
           </div>
         )}
       </div>
