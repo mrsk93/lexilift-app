@@ -8,7 +8,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './vitest.setup.ts',
-    exclude: ['**/node_modules/**', '**/e2e/**', '**/.next/**'],
+    exclude: ['**/node_modules/**', '**/e2e/**/*.spec.ts', '**/.next/**'],
     alias: {
       '@': path.resolve(__dirname, './src'),
       // Stub 'server-only' in tests: it throws in node context but is a no-op in real Next.js builds
