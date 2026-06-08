@@ -7,6 +7,7 @@ import { db } from '@/lib/db/client'
 import { chatMessages } from '@/lib/db/schema'
 import { assertOrgPlanLimit } from '@/lib/billing/assertOrgPlanLimit'
 import { incrementUsage } from '@/lib/billing/usage'
+import { logger } from '@/lib/log/log'
 
 type ChatRole = 'system' | 'user' | 'assistant'
 
@@ -49,6 +50,11 @@ export async function POST(req: Request) {
     const lastMessage = messages[messages.length - 1] as IncomingMessage
     const userQuery = extractText(lastMessage)
 
+    logger.info(
+      { orgId, queryLen: userQuery.length, modelName, sessionId },
+      'query received'
+    )
+
     const contextItems = await retrieveContext(userQuery, orgId)
     const enrichedPrompt = buildContextPrompt(userQuery, contextItems)
 
@@ -87,8 +93,18 @@ export async function POST(req: Request) {
               totalTokens = chunk.totalTokens ?? null
             }
           }
+        } catch (e) {
+          logger.error(
+            { err: e, orgId, modelName, latencyMs: Date.now() - startedAt },
+            'llm stream failed'
+          )
+          throw e
         } finally {
           writer.write({ type: 'text-end', id: textId })
+          logger.info(
+            { orgId, modelName, latencyMs: Date.now() - startedAt, tokens: totalTokens },
+            'llm stream completed'
+          )
         }
       },
       onFinish: async () => {
@@ -130,7 +146,7 @@ export async function POST(req: Request) {
       },
     })
   } catch (error) {
-    console.error('Query API Error:', error)
+    logger.error({ err: error }, 'query failed')
     const message = error instanceof Error ? error.message : 'Internal Server Error'
     return NextResponse.json(
       { error: message },
