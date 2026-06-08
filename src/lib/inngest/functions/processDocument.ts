@@ -56,9 +56,9 @@ export const processDocument = inngest.createFunction(
       })
 
       text = await step.run('parse', async () => {
-        if (doc.fileType === 'application/pdf') return parsePdf(buffer)
-        if (doc.fileType?.includes('word')) return parseDocx(buffer)
-        return parseText(buffer)
+        if (doc.fileType === 'application/pdf') return parsePdf(buffer as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (doc.fileType?.includes('word')) return parseDocx(buffer as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+        return parseText(buffer as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       })
     }
 

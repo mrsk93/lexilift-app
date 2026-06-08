@@ -54,10 +54,10 @@ describe('processDocument', () => {
   })
 
   it('parses, chunks, embeds, upserts, and marks ready', async () => {
-    const result = await processDocument.fn({
+    const result = await (processDocument as any).fn({
       event: { data: { docId: 'd1' } },
       step: { run: (_n: string, fn: () => unknown) => fn() },
-    } as any)
+    } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
 
     expect(result).toMatchObject({ docId: 'd1', chunkCount: 1 })
     expect(parsePdf).toHaveBeenCalled()

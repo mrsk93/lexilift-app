@@ -89,7 +89,7 @@ describe('hardDeleteAccounts', () => {
   it('returns processed count of zero when no expired users', async () => {
     planFindExpired([])
     const ctx: StepCtx = { step: { run: (_n, fn) => fn() } }
-    const result = await hardDeleteAccounts.fn(ctx)
+    const result = await (hardDeleteAccounts as any).fn(ctx) // eslint-disable-line @typescript-eslint/no-explicit-any
     expect(result).toEqual({ processed: 0 })
   })
 
@@ -99,7 +99,7 @@ describe('hardDeleteAccounts', () => {
     planOwnerCount([{ id: 'm1' }])
 
     const ctx: StepCtx = { step: { run: (_n, fn) => fn() } }
-    const result = await hardDeleteAccounts.fn(ctx)
+    const result = await (hardDeleteAccounts as any).fn(ctx) // eslint-disable-line @typescript-eslint/no-explicit-any
 
     expect(result).toEqual({ processed: 1 })
     const deleteUser = mockCreateAdminClient.mock.results[0].value.auth.admin.deleteUser
@@ -112,7 +112,7 @@ describe('hardDeleteAccounts', () => {
     planOwnerCount([{ id: 'm1' }, { id: 'm2' }])
 
     const ctx: StepCtx = { step: { run: (_n, fn) => fn() } }
-    const result = await hardDeleteAccounts.fn(ctx)
+    const result = await (hardDeleteAccounts as any).fn(ctx) // eslint-disable-line @typescript-eslint/no-explicit-any
 
     expect(result).toEqual({ processed: 1 })
   })
@@ -127,7 +127,7 @@ describe('hardDeleteAccounts', () => {
     })
 
     const ctx: StepCtx = { step: { run: (_n, fn) => fn() } }
-    const result = await hardDeleteAccounts.fn(ctx)
+    const result = await (hardDeleteAccounts as any).fn(ctx) // eslint-disable-line @typescript-eslint/no-explicit-any
 
     expect(result).toEqual({ processed: 1 })
     expect(mockLoggerWarn).toHaveBeenCalled()
