@@ -60,8 +60,9 @@ export async function POST(request: Request) {
     await safeSend({ name: 'document/uploaded', data: { docId: newDoc.id } })
 
     return NextResponse.json(newDoc)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Upload error:', error)
-    return NextResponse.json({ error: error.message }, { status: error.message === 'Forbidden' ? 403 : 500 })
+    const message = error instanceof Error ? error.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: message === 'Forbidden' ? 403 : 500 })
   }
 }

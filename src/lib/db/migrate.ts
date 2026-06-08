@@ -19,9 +19,10 @@ const run = async () => {
     const statements = sql.split('--> statement-breakpoint').map(s => s.trim()).filter(Boolean)
     for (const stmt of statements) {
       try { await client.unsafe(stmt) }
-      catch (e: any) {
-        if (e.message.includes('already exists')) continue
-        console.warn(`[${file}]`, e.message)
+      catch (e) {
+        const message = e instanceof Error ? e.message : String(e)
+        if (message.includes('already exists')) continue
+        console.warn(`[${file}]`, message)
       }
     }
     console.log(`✓ ${file}`)

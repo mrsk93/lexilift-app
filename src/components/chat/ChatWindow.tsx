@@ -149,8 +149,7 @@ export function ChatWindow({
         {messages.map((m, i) => (
           <MessageBubble
             key={m.id ?? i}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            message={m as any}
+            message={m as unknown as Parameters<typeof MessageBubble>[0]['message']}
             isStreaming={streaming && i === messages.length - 1}
             onRegenerate={onRegenerate}
             onStop={onStop}

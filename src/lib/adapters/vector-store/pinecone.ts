@@ -61,8 +61,7 @@ export class PineconeAdapter implements VectorStoreAdapter {
       const batch = records.slice(i, i + batchSize)
       // Remove embedding from metadata before sending (optional but good practice to save space)
       const cleanBatch = batch.map((r) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { embedding: _embedding, ...restMetadata } = r.metadata as Record<string, any>
+        const { embedding: _embedding, ...restMetadata } = r.metadata
         return {
           id: r.id,
           values: r.values,

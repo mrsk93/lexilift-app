@@ -34,8 +34,9 @@ export async function POST(request: Request) {
     // await resend.emails.send({ ... })
 
     return NextResponse.json(newInvite)
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: error.message === 'Unauthorized' ? 401 : 500 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: message === 'Unauthorized' ? 401 : 500 })
   }
 }
 
@@ -80,7 +81,8 @@ export async function PUT(request: Request) {
       .where(eq(invites.id, inviteId))
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: error.message === 'Unauthorized' ? 401 : 500 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: message === 'Unauthorized' ? 401 : 500 })
   }
 }

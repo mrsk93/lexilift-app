@@ -1,4 +1,4 @@
-import { RerankerAdapter } from './interface'
+import { RerankerAdapter, RerankerResult } from './interface'
 import { env } from '@/lib/env'
 
 export class VoyageReranker implements RerankerAdapter {
@@ -8,7 +8,7 @@ export class VoyageReranker implements RerankerAdapter {
     this.apiKey = env.VOYAGE_API_KEY || ''
   }
 
-  async rerank(query: string, documents: string[]): Promise<any[]> {
+  async rerank(query: string, documents: string[]): Promise<RerankerResult[]> {
     if (!this.apiKey) {
       // Mock reranker if no API key
       return documents.map((doc, index) => ({
@@ -37,8 +37,8 @@ export class VoyageReranker implements RerankerAdapter {
         throw new Error(`Voyage API error: ${response.statusText}`)
       }
 
-      const data = await response.json()
-      return data.data || []
+      const data = (await response.json()) as { data?: RerankerResult[] }
+      return data.data ?? []
     } catch (error) {
       console.error('Reranking failed', error)
       return documents.map((doc, index) => ({

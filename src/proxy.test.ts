@@ -17,8 +17,8 @@ describe('proxy', () => {
     mockGetUser.mockReset()
     mockUpdateSession.mockReset()
     mockUpdateSession.mockImplementation(async () => {
-      const res = new Response(null, { headers: new Headers() })
-      ;(res as any)._user = await mockGetUser()
+      const res = new Response(null, { headers: new Headers() }) as Response & { _user?: unknown }
+      res._user = await mockGetUser()
       return res
     })
   })

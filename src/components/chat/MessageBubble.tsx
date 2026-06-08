@@ -6,6 +6,24 @@ import { FeedbackButtons } from './FeedbackButtons'
 import { MessageActions } from './MessageActions'
 import { getMessageText } from '@/lib/chat/message-text'
 
+export interface Citation {
+  index?: number
+  docId?: string | null
+  docName?: string | null
+  excerpt?: string | null
+  pageNum?: number | null
+}
+
+export interface ChatMessageLike {
+  id?: string
+  role: 'user' | 'assistant' | 'system'
+  content?: string
+  parts?: Array<{ type?: string; text?: string }>
+  metadata?: { citations?: Citation[]; feedback?: 'thumbs_up' | 'thumbs_down' | null }
+  citations?: Citation[]
+  feedback?: 'thumbs_up' | 'thumbs_down' | null
+}
+
 export function MessageBubble({
   message,
   isStreaming = false,
@@ -13,23 +31,18 @@ export function MessageBubble({
   onStop,
   onEdit,
 }: {
-  message: any
+  message: ChatMessageLike
   isStreaming?: boolean
   onRegenerate?: () => void
   onStop?: () => void
   onEdit?: () => void
 }) {
   const isUser = message.role === 'user'
-  const citations: Array<{
-    index?: number
-    docId?: string | null
-    docName?: string | null
-    excerpt?: string | null
-    pageNum?: number | null
-  }> = message.metadata?.citations || message.citations || []
+  const citations: Citation[] = message.metadata?.citations || message.citations || []
 
   const messageId: string | undefined = message.id
-  const feedback: 'thumbs_up' | 'thumbs_down' | null = message.feedback ?? null
+  const feedback: 'thumbs_up' | 'thumbs_down' | null =
+    message.feedback ?? message.metadata?.feedback ?? null
 
   const hasActions = Boolean(onRegenerate || onStop || onEdit)
   const showFooter = (!isUser && messageId) || (messageId && hasActions)
