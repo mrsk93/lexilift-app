@@ -32,6 +32,8 @@ jobs:
         with: { node-version: 20, cache: 'npm' }
       - run: npm ci
       - run: npm test -- --coverage
+      - run: npm audit --omit=dev --audit-level=high
+        continue-on-error: false
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: coverage, path: coverage/ }
@@ -50,3 +52,13 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: stub
           SUPABASE_SERVICE_ROLE_KEY: stub
           DATABASE_URL: postgresql://stub:stub@localhost:5432/stub
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}

@@ -1,0 +1,16 @@
+title = "LexiLift gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "lexilift-polar-webhook"
+description = "Polar webhook secret"
+regex = '''POLAR_WEBHOOK_SECRET\s*=\s*['"]?[a-zA-Z0-9_]{20,}'''
+tags = ["secret", "polar"]
+
+[[rules]]
+id = "lexilift-sentry-auth-token"
+description = "Sentry auth token"
+regex = '''sntrys_[a-zA-Z0-9_]{40,}'''
+tags = ["secret", "sentry"]
