@@ -24,6 +24,7 @@ export function UsageGauge({
       </div>
       <Progress
         value={pct}
+        aria-label={`${label} usage: ${pct} percent`}
         className={`h-2 ${nearLimit ? '[&>div]:bg-amber-500' : '[&>div]:bg-emerald-500'}`}
       />
     </div>

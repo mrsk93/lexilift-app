@@ -7,7 +7,8 @@ const PUBLIC_PREFIXES = [
   '/verify-email', '/api/auth', '/widget', '/api/widget',
   '/api/inngest', '/api/cron', '/api/webhooks',
   '/api/ready',
-  '/terms', '/privacy', '/dpa',
+  '/api/test',
+  '/terms', '/privacy', '/dpa', '/help',
   '/_next', '/favicon',
 ]
 

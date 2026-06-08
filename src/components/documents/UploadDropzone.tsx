@@ -114,7 +114,7 @@ export function UploadDropzone({ orgId }: { orgId: string }) {
                 </div>
                 {uploading && progress[file.name] !== undefined && (
                   <div className="mt-3">
-                    <Progress value={progress[file.name]} className="h-1.5" />
+                    <Progress value={progress[file.name]} className="h-1.5" aria-label={`Upload progress for ${file.name}`} />
                   </div>
                 )}
               </div>
