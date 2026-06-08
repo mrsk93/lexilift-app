@@ -5,6 +5,7 @@ import { resetQueryCounts } from '@/lib/inngest/functions/resetQueryCounts'
 import { checkUsageAlerts } from '@/lib/inngest/functions/checkUsageAlerts'
 import { syncSubscriptions } from '@/lib/inngest/functions/syncSubscriptions'
 import { purgeSoftDeleted } from '@/lib/inngest/functions/purgeSoftDeleted'
+import { hardDeleteAccounts } from '@/lib/inngest/functions/hardDeleteAccounts'
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -14,5 +15,6 @@ export const { GET, POST, PUT } = serve({
     checkUsageAlerts,
     syncSubscriptions,
     purgeSoftDeleted,
+    hardDeleteAccounts,
   ],
 })

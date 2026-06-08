@@ -7,10 +7,12 @@ import { memberships, organizations, profiles } from '@/lib/db/schema'
 import { OrgForm } from '@/components/settings/OrgForm'
 import { DataExportButton } from '@/components/settings/DataExportButton'
 import { DeleteOrgDialog } from '@/components/settings/DeleteOrgDialog'
+import { DeleteAccountDialog } from '@/components/settings/DeleteAccountDialog'
+import { CancelDeletionButton } from '@/components/settings/CancelDeletionButton'
 import { TransferOwnershipDialog, type TransferCandidate } from '@/components/settings/TransferOwnershipDialog'
 import { MembersTable, type Member, type Role } from '@/components/team/MembersTable'
 import { SettingsTabs } from '@/components/settings/SettingsTabs'
-import { Shield, AlertTriangle } from 'lucide-react'
+import { Shield, AlertTriangle, UserX } from 'lucide-react'
 
 export default async function SettingsPage() {
   const profile = await getCurrentProfile()
@@ -164,6 +166,30 @@ export default async function SettingsPage() {
                   </CardHeader>
                   <CardContent>
                     <DeleteOrgDialog orgId={orgId} />
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-none border-border border-red-200">
+                  <CardHeader>
+                    <CardTitle className="text-red-600 flex items-center gap-2">
+                      <UserX className="w-5 h-5" /> Delete my account
+                    </CardTitle>
+                    <CardDescription>
+                      Schedule permanent deletion of your personal account after a 30-day grace period (GDPR Art. 17).
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {profile.deletedAt && profile.deletionScheduledFor ? (
+                      <div className="space-y-2">
+                        <p className="text-sm text-amber-600">
+                          Deletion scheduled for{' '}
+                          {new Date(profile.deletionScheduledFor).toLocaleDateString()}.
+                        </p>
+                        <CancelDeletionButton />
+                      </div>
+                    ) : (
+                      <DeleteAccountDialog />
+                    )}
                   </CardContent>
                 </Card>
               </div>
