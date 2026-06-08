@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import { randomBytes } from 'node:crypto'
 import { updateSession } from '@/lib/auth/supabase/middleware'
 
 const PUBLIC_PREFIXES = [
@@ -9,9 +10,11 @@ const PUBLIC_PREFIXES = [
 ]
 
 export async function proxy(request: NextRequest) {
+  const reqId = request.headers.get('x-request-id') ?? randomBytes(8).toString('hex')
   const response = await updateSession(request)
   const { pathname } = request.nextUrl
 
+  response.headers.set('x-request-id', reqId)
   response.headers.set('x-pathname', pathname)
 
   if (PUBLIC_PREFIXES.some(p => pathname.startsWith(p))) return response

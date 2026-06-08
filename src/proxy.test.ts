@@ -13,8 +13,8 @@ vi.mock('@/lib/auth/supabase/middleware', () => ({
 
 import { proxy } from './proxy'
 
-const makeReq = (url: string) =>
-  new NextRequest(new Request(url)) as unknown as NextRequest
+const makeReq = (url: string, headers: Record<string, string> = {}) =>
+  new NextRequest(new Request(url, { headers })) as unknown as NextRequest
 
 describe('proxy', () => {
   it('redirects unauthenticated users from /dashboard', async () => {
@@ -33,5 +33,20 @@ describe('proxy', () => {
     mockGetUser.mockResolvedValue(null)
     const res = await proxy(makeReq('http://localhost/widget/abc'))
     expect(res.headers.get('location')).toBeNull()
+  })
+
+  it('sets x-request-id header on response', async () => {
+    mockGetUser.mockResolvedValue(null)
+    const res = await proxy(makeReq('http://localhost/login'))
+    const id = res.headers.get('x-request-id')
+    expect(id).toMatch(/^[0-9a-f]{16}$/)
+  })
+
+  it('reuses inbound x-request-id header if present', async () => {
+    mockGetUser.mockResolvedValue(null)
+    const res = await proxy(
+      makeReq('http://localhost/login', { 'x-request-id': 'inbound-id-123' })
+    )
+    expect(res.headers.get('x-request-id')).toBe('inbound-id-123')
   })
 })
