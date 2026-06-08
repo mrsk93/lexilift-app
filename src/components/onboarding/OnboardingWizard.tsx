@@ -50,7 +50,7 @@ export function OnboardingWizard({
   return (
     <div className="max-w-xl mx-auto py-8 space-y-6">
       <div>
-        <Progress value={pct} className="h-1" />
+        <Progress value={pct} className="h-1" aria-label={`Onboarding progress: step ${step} of 3`} />
         <p className="text-xs text-muted-foreground mt-2">Step {step} of 3</p>
       </div>
       {step === 1 && <StepOrg initial={initialName} onNext={saveName} />}
