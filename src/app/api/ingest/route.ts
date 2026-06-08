@@ -6,6 +6,7 @@ import { getStorage } from '@/lib/adapters/storage/supabase'
 import { safeSend } from '@/lib/inngest/client'
 import { v4 as uuidv4 } from 'uuid'
 import { assertOrgPlanLimit } from '@/lib/billing/assertOrgPlanLimit'
+import { checkLimit } from '@/lib/ratelimit/scopes'
 
 export async function POST(request: Request) {
   try {
@@ -21,6 +22,11 @@ export async function POST(request: Request) {
 
     // Verify user has access to this org
     await requireOrgAccess(orgId)
+
+    const rl = await checkLimit('ingest', `org:${orgId}`)
+    if (!rl.success) {
+      return NextResponse.json({ error: 'RATE_LIMITED' }, { status: 429 })
+    }
 
     try {
       await assertOrgPlanLimit(orgId, 'documents')

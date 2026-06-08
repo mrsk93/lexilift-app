@@ -8,6 +8,7 @@ import { chatMessages } from '@/lib/db/schema'
 import { assertOrgPlanLimit } from '@/lib/billing/assertOrgPlanLimit'
 import { incrementUsage } from '@/lib/billing/usage'
 import { logger } from '@/lib/log/log'
+import { checkLimit } from '@/lib/ratelimit/scopes'
 
 type ChatRole = 'system' | 'user' | 'assistant'
 
@@ -39,6 +40,11 @@ export async function POST(req: Request) {
     }
 
     await requireOrgAccess(orgId)
+
+    const rl = await checkLimit('query', `org:${orgId}`)
+    if (!rl.success) {
+      return NextResponse.json({ error: 'RATE_LIMITED' }, { status: 429 })
+    }
 
     try {
       await assertOrgPlanLimit(orgId, 'queries')

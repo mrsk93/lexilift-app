@@ -4,6 +4,7 @@ import { widgetTokens } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { retrieveContext, buildContextPrompt } from '@/lib/langchain/rag-chain'
 import { getLLM } from '@/lib/llm/registry'
+import { checkLimit } from '@/lib/ratelimit/scopes'
 
 function corsHeaders(origin: string): HeadersInit {
   return {
@@ -50,6 +51,14 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: 'Origin not allowed' },
         { status: 403, headers: corsHeaders(origin) }
+      )
+    }
+
+    const rl = await checkLimit('widgetChat', `token:${token}`)
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'RATE_LIMITED' },
+        { status: 429, headers: corsHeaders(origin) }
       )
     }
 
