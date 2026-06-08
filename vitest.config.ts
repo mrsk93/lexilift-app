@@ -20,10 +20,35 @@ export default defineConfig({
       include: ['src/lib/**', 'src/app/api/**', 'src/components/**'],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/migrations/**'],
       thresholds: {
+        // Global aggregate floor. The codebase still has many untested
+        // routes/UI components; the global numbers track current totals
+        // so they only fail CI on a real overall regression.
         statements: 41,
         branches: 34,
         functions: 39,
         lines: 42,
+        // Per-glob aggregate thresholds for the well-tested adapter/LLM
+        // surface. These files all sit at ~100% today; the thresholds
+        // catch regressions on this code even when the global numbers
+        // (dominated by untested routes) would not.
+        'src/lib/llm/adapters/**': {
+          statements: 90,
+          branches: 90,
+          functions: 90,
+          lines: 90,
+        },
+        'src/lib/llm/embeddings.ts': {
+          statements: 90,
+          branches: 80,
+          functions: 90,
+          lines: 90,
+        },
+        'src/lib/adapters/reranker/**': {
+          statements: 90,
+          branches: 80,
+          functions: 90,
+          lines: 90,
+        },
       },
     },
   }
