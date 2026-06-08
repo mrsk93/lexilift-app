@@ -29,6 +29,7 @@ export const organizations = pgTable('organizations', {
   llmModel: text('llm_model').default('gpt-4o'),
   documentsCount: integer('documents_count').default(0),
   dataRegion: text('data_region').default('us'),
+  onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
 });
 
 export const memberships = pgTable(
@@ -141,4 +142,17 @@ export const widgetTokens = pgTable('widget_tokens', {
   logoUrl: text('logo_url'),
   rateLimitPerMin: integer('rate_limit_per_min').default(10),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+// --- BILLING ---
+
+export const invoices = pgTable('invoices', {
+  id: text('id').primaryKey(),
+  orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  amountCents: integer('amount_cents').notNull(),
+  currency: text('currency').notNull(),
+  invoiceStatus: text('status').notNull(),
+  hostedUrl: text('hosted_url'),
+  pdfUrl: text('pdf_url'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

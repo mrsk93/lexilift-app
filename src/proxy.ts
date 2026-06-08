@@ -3,7 +3,7 @@ import { updateSession } from '@/lib/auth/supabase/middleware'
 
 const PUBLIC_PREFIXES = [
   '/login', '/signup', '/forgot-password', '/reset-password',
-  '/api/auth', '/widget', '/api/widget',
+  '/verify-email', '/api/auth', '/widget', '/api/widget',
   '/api/inngest', '/api/cron', '/api/webhooks',
   '/_next', '/favicon',
 ]
@@ -11,6 +11,8 @@ const PUBLIC_PREFIXES = [
 export async function proxy(request: NextRequest) {
   const response = await updateSession(request)
   const { pathname } = request.nextUrl
+
+  response.headers.set('x-pathname', pathname)
 
   if (PUBLIC_PREFIXES.some(p => pathname.startsWith(p))) return response
   if (pathname === '/' || pathname.startsWith('/api/health')) return response
@@ -23,6 +25,11 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('next', pathname)
+    return NextResponse.redirect(url)
+  }
+  if (user.email_confirmed_at === null && !pathname.startsWith('/verify-email') && !pathname.startsWith('/api/auth')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/verify-email'
     return NextResponse.redirect(url)
   }
   return response

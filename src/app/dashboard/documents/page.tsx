@@ -1,22 +1,39 @@
 import { db } from '@/lib/db/client'
 import { documents } from '@/lib/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { and, eq, isNull, isNotNull, desc } from 'drizzle-orm'
 import { getCurrentOrgId } from '@/lib/auth/current-org'
 import { UploadDropzone } from '@/components/documents/UploadDropzone'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { FileText } from 'lucide-react'
-import { DeleteDocButton } from '@/components/documents/DeleteDocButton'
+import { UrlIngestForm } from '@/components/documents/UrlIngestForm'
+import { DocumentsView } from '@/components/documents/DocumentsView'
+import { type DocRow } from '@/components/documents/DocumentList'
 
 export default async function DocumentsPage() {
   const orgId = await getCurrentOrgId()
   if (!orgId) return null
 
-  const docs = await db
+  const liveRows = await db
     .select()
     .from(documents)
-    .where(eq(documents.orgId, orgId))
+    .where(and(eq(documents.orgId, orgId), isNull(documents.deletedAt)))
     .orderBy(desc(documents.createdAt))
+
+  const trashedRows = await db
+    .select()
+    .from(documents)
+    .where(and(eq(documents.orgId, orgId), isNotNull(documents.deletedAt)))
+    .orderBy(desc(documents.createdAt))
+
+  const toDocRow = (d: (typeof liveRows)[number]): DocRow => ({
+    id: d.id,
+    name: d.name,
+    status: d.status ?? 'processing',
+    fileType: d.fileType,
+    fileSize: d.fileSize,
+    createdAt: d.createdAt ?? new Date(),
+  })
+
+  const live = liveRows.map(toDocRow)
+  const trashed = trashedRows.map(toDocRow)
 
   return (
     <div className="space-y-8">
@@ -26,61 +43,16 @@ export default async function DocumentsPage() {
       </div>
 
       <div className="bg-card border border-border rounded-lg p-6">
+        <UrlIngestForm />
+      </div>
+
+      <div className="bg-card border border-border rounded-lg p-6">
         <UploadDropzone orgId={orgId} />
       </div>
 
       <div className="space-y-4">
         <h3 className="text-lg font-heading font-semibold">Your Files</h3>
-        <div className="border border-border rounded-lg bg-card overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Uploaded</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {docs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                    No documents uploaded yet.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                docs.map((d) => (
-                  <TableRow key={d.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{d.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={d.status === 'ready' ? 'default' : d.status === 'processing' ? 'secondary' : 'destructive'}
-                        className="capitalize"
-                      >
-                        {d.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {((d.fileSize || 0) / 1024 / 1024).toFixed(2)} MB
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {d.createdAt ? d.createdAt.toLocaleDateString() : '—'}
-                    </TableCell>
-                    <TableCell>
-                      <DeleteDocButton id={d.id} />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <DocumentsView live={live} trashed={trashed} />
       </div>
     </div>
   )

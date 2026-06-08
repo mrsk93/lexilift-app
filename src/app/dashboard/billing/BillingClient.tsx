@@ -3,38 +3,71 @@
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { CheckCircle2, Zap } from 'lucide-react'
-import { createProCheckoutAction } from './actions'
+import { Zap } from 'lucide-react'
+import { UsageGauge } from '@/components/billing/UsageGauge'
+import { PlanCard } from '@/components/billing/PlanCard'
+import { createCheckoutAction } from './actions'
+import { toast } from 'sonner'
+import type { PlanId } from '@/lib/billing/plans-data'
 
 interface BillingClientProps {
   org: {
-    plan: string | null;
-    queryCount: number | null;
-    queryLimit: number | null;
+    plan: string | null
+    queryCount: number | null
+    queryLimit: number | null
   }
+  documentsUsed: number
+  documentsLimit: number
+  widgetsUsed: number
+  widgetsLimit: number
 }
 
-export function BillingClient({ org }: BillingClientProps) {
+export function BillingClient({
+  org,
+  documentsUsed,
+  documentsLimit,
+  widgetsUsed,
+  widgetsLimit,
+}: BillingClientProps) {
   const [loading, setLoading] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
 
-  const currentPlan = org.plan || 'starter'
+  const currentPlan = (org.plan as PlanId) ?? 'starter'
   const queryLimit = org.queryLimit ?? 500
   const queryCount = org.queryCount ?? 0
+  const docLimit = documentsLimit
+  const widgetLimit = widgetsLimit
 
-  const handleUpgrade = async () => {
+  const onSelect = async (plan: PlanId) => {
     setLoading(true)
     try {
-      const { url } = await createProCheckoutAction()
+      const { url } = await createCheckoutAction(plan)
       window.location.href = url
-    } catch (error) {
-      console.error('Failed to create checkout:', error)
+    } catch (err) {
+      console.error('Checkout failed', err)
+      toast.error('Could not start checkout. Please try again.')
       setLoading(false)
     }
   }
 
-  const usagePercent = Math.min((queryCount / queryLimit) * 100, 100)
-  const isNearLimit = usagePercent > 80
+  const openPortal = async () => {
+    setPortalLoading(true)
+    try {
+      const r = await fetch('/api/billing/portal', { method: 'POST' })
+      if (!r.ok) {
+        const { error } = await r.json().catch(() => ({ error: 'Portal unavailable' }))
+        throw new Error(error)
+      }
+      const { url } = await r.json()
+      window.location.href = url
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not open portal')
+      setPortalLoading(false)
+    }
+  }
+
+  const queryPct = queryLimit === Infinity ? 0 : Math.min((queryCount / queryLimit) * 100, 100)
+  const isNearLimit = queryPct > 80
 
   return (
     <div className="space-y-8">
@@ -48,30 +81,21 @@ export function BillingClient({ org }: BillingClientProps) {
           <Card className="shadow-none border-border">
             <CardHeader>
               <CardTitle>Current Usage</CardTitle>
-              <CardDescription>Your query usage for the current billing cycle.</CardDescription>
+              <CardDescription>Your usage for the current billing cycle.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-end">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">Queries Used</p>
-                  <p className="text-3xl font-bold font-mono">
-                    {queryCount} <span className="text-lg text-muted-foreground font-normal">/ {queryLimit}</span>
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className={`text-sm font-medium px-2 py-1 rounded-full ${isNearLimit ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
-                    {usagePercent.toFixed(1)}% Used
-                  </span>
-                </div>
-              </div>
-              <Progress value={usagePercent} className={`h-2 ${isNearLimit ? '[&>div]:bg-destructive' : ''}`} />
-              
+            <CardContent className="space-y-6">
+              <UsageGauge used={queryCount} limit={queryLimit} label="Queries" />
+              <UsageGauge used={documentsUsed} limit={docLimit} label="Documents" />
+              <UsageGauge used={widgetsUsed} limit={widgetLimit} label="Widgets" />
+
               {isNearLimit && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4 mt-4 flex items-start gap-3">
+                <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4 flex items-start gap-3">
                   <Zap className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
                   <div>
                     <h4 className="font-medium text-destructive">Approaching limits</h4>
-                    <p className="text-sm text-destructive/80 mt-1">You've used over 80% of your included queries. Upgrade your plan to avoid service interruption.</p>
+                    <p className="text-sm text-destructive/80 mt-1">
+                      You&apos;ve used over 80% of your included queries. Upgrade your plan to avoid service interruption.
+                    </p>
                   </div>
                 </div>
               )}
@@ -80,67 +104,10 @@ export function BillingClient({ org }: BillingClientProps) {
 
           <div>
             <h3 className="text-xl font-heading font-bold mb-4">Available Plans</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Starter Plan */}
-              <Card className={`shadow-none border-border relative ${currentPlan === 'starter' ? 'ring-2 ring-primary border-primary' : ''}`}>
-                {currentPlan === 'starter' && (
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
-                    CURRENT
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle>Starter</CardTitle>
-                  <CardDescription>Perfect for testing and small projects.</CardDescription>
-                  <div className="mt-4 flex items-baseline text-3xl font-bold">
-                    $0<span className="text-base text-muted-foreground font-normal ml-1">/mo</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> 500 queries / month</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> 10 documents</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Standard support</li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full" disabled={currentPlan === 'starter'}>
-                    {currentPlan === 'starter' ? 'Current Plan' : 'Downgrade'}
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              {/* Pro Plan */}
-              <Card className={`shadow-none border-border relative ${currentPlan === 'pro' ? 'ring-2 ring-primary border-primary' : ''}`}>
-                {currentPlan === 'pro' && (
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
-                    CURRENT
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle>Pro</CardTitle>
-                  <CardDescription>For production applications.</CardDescription>
-                  <div className="mt-4 flex items-baseline text-3xl font-bold">
-                    $29<span className="text-base text-muted-foreground font-normal ml-1">/mo</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> 5,000 queries / month</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> 100 documents</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Priority support</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Custom widget branding</li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    className="w-full" 
-                    onClick={handleUpgrade} 
-                    disabled={currentPlan === 'pro' || loading}
-                  >
-                    {loading ? 'Processing...' : currentPlan === 'pro' ? 'Current Plan' : 'Upgrade to Pro'}
-                  </Button>
-                </CardFooter>
-              </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {(['starter', 'pro', 'team', 'enterprise'] as PlanId[]).map((p) => (
+                <PlanCard key={p} plan={p} current={currentPlan === p} onSelect={onSelect} />
+              ))}
             </div>
           </div>
         </div>
@@ -152,20 +119,30 @@ export function BillingClient({ org }: BillingClientProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Payment Method</p>
-                <p className="text-sm mt-1">Visa ending in 4242</p>
+                <p className="text-sm font-medium text-muted-foreground">Plan</p>
+                <p className="text-sm mt-1 capitalize">{currentPlan}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Next Invoice</p>
-                <p className="text-sm mt-1">{currentPlan === 'pro' ? '$29.00' : '$0.00'} on Jul 1, 2026</p>
+                <p className="text-sm font-medium text-muted-foreground">Query Resets</p>
+                <p className="text-sm mt-1">1st of next month</p>
               </div>
-              <Button variant="outline" size="sm" className="w-full mt-4">
-                Update Payment Method
-              </Button>
             </CardContent>
+            <CardFooter>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={openPortal}
+                disabled={portalLoading}
+              >
+                {portalLoading ? 'Opening…' : 'Manage Billing'}
+              </Button>
+            </CardFooter>
           </Card>
         </div>
       </div>
+      {loading && (
+        <p className="text-sm text-muted-foreground">Redirecting to checkout…</p>
+      )}
     </div>
   )
 }
