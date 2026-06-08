@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent skill infrastructure (not project source).
+    ".agents/**",
+    // Generated coverage output.
+    "coverage/**",
   ]),
 ]);
 

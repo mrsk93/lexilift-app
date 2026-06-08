@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Bot, Zap, Shield, Database, LayoutDashboard } from 'lucide-react'
 
@@ -54,7 +55,7 @@ export default function LandingPage() {
             <div className="mt-20 relative max-w-5xl mx-auto">
               <div className="absolute -inset-1 rounded-2xl bg-gradient-to-b from-primary/20 to-transparent blur-xl"></div>
               <div className="relative rounded-xl border border-border bg-card/50 backdrop-blur-sm p-2 shadow-2xl overflow-hidden ring-1 ring-border">
-                <img src="/dashboard-preview.png" alt="LexiLift Dashboard Preview" className="w-full rounded-lg border border-border/50 shadow-sm" />
+                <Image src="/dashboard-preview.png" alt="LexiLift Dashboard Preview" width={3022} height={1552} sizes="(max-width: 1024px) 100vw, 1024px" className="w-full h-auto rounded-lg border border-border/50 shadow-sm" />
               </div>
             </div>
           </div>

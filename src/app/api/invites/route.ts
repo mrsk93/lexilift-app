@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db/client'
 import { invites, memberships } from '@/lib/db/schema'
 import { requireAuth, isAdmin } from '@/lib/auth/org-utils'
-import { and, eq } from 'drizzle-orm'
-import { env } from '@/lib/env'
+import { eq } from 'drizzle-orm'
 
 // In a real app, you would use Resend to send the email
 // import { Resend } from 'resend'

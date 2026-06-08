@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db/client'
 import { organizations, memberships, profiles } from '@/lib/db/schema'
-import { requireAuth, isOwner } from '@/lib/auth/org-utils'
+import { requireAuth } from '@/lib/auth/org-utils'
 import { eq } from 'drizzle-orm'
 
 export async function POST(request: Request) {

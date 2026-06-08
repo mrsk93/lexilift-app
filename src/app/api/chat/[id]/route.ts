@@ -10,7 +10,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const user = await requireAuth()
+    await requireAuth()
 
     const sessions = await db.select().from(chatSessions).where(eq(chatSessions.id, id)).limit(1)
     const session = sessions[0]
