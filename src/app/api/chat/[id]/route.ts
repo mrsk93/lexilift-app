@@ -24,7 +24,8 @@ export async function DELETE(
     await db.delete(chatSessions).where(eq(chatSessions.id, id))
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: error.message === 'Forbidden' ? 403 : 500 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: message === 'Forbidden' ? 403 : 500 })
   }
 }

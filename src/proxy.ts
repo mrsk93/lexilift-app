@@ -26,7 +26,7 @@ export async function proxy(request: NextRequest) {
   if (PUBLIC_PREFIXES.some(p => pathname.startsWith(p))) return response
   if (pathname === '/' || pathname.startsWith('/api/health')) return response
 
-  const user = (response as any)._user
+  const user = (response as { _user?: { id: string; email_confirmed_at?: string | null } | null })._user ?? null
   if (!user) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

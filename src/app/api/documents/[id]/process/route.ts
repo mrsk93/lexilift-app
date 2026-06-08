@@ -35,7 +35,8 @@ export async function POST(
     }
 
     return NextResponse.json({ success: true, status: 'processing' })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: error.message === 'Forbidden' ? 403 : 500 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: message === 'Forbidden' ? 403 : 500 })
   }
 }

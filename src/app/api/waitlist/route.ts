@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Waitlist API Error:', error)
     return NextResponse.json({ error: 'Failed to join waitlist' }, { status: 500 })
   }

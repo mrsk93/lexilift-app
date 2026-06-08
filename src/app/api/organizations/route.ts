@@ -35,8 +35,9 @@ export async function POST(request: Request) {
       .where(eq(profiles.id, user.id))
 
     return NextResponse.json(newOrg)
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: error.message === 'Unauthorized' ? 401 : 500 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: message === 'Unauthorized' ? 401 : 500 })
   }
 }
 
@@ -55,8 +56,9 @@ export async function PUT(request: Request) {
       .where(eq(profiles.id, user.id))
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    console.error('PUT /api/organizations error:', error);
-    return NextResponse.json({ error: error.message }, { status: error.message === 'Unauthorized' ? 401 : 500 })
+  } catch (error) {
+    console.error('PUT /api/organizations error:', error)
+    const message = error instanceof Error ? error.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: message === 'Unauthorized' ? 401 : 500 })
   }
 }

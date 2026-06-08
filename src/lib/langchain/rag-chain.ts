@@ -24,7 +24,10 @@ export async function retrieveContext(query: string, orgId: string) {
   
   if (matches.length === 0) return []
 
-  const chunksText = matches.map(m => m.metadata?.text || '')
+  const chunksText: string[] = matches.map(m => {
+    const text = m.metadata?.text
+    return typeof text === 'string' ? text : ''
+  })
 
   // 3. Rerank using Voyage AI
   const reranker = getReranker()
@@ -41,7 +44,13 @@ export async function retrieveContext(query: string, orgId: string) {
   })
 }
 
-export function buildContextPrompt(query: string, contextItems: any[]) {
+export interface ContextItem {
+  text: string
+  score?: number
+  metadata?: Record<string, unknown>
+}
+
+export function buildContextPrompt(query: string, contextItems: ContextItem[]) {
   const contextStr = contextItems
     .map((item, idx) => `[Source ${idx + 1} | Doc: ${item.metadata?.docId || 'Unknown'}]\n${item.text}`)
     .join('\n\n')

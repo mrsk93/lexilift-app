@@ -1,13 +1,15 @@
 export interface Chunk {
   id: string
   text: string
-  metadata: Record<string, any>
+  metadata: {
+    embedding?: number[]
+  } & Record<string, unknown>
 }
 
 export interface Match {
   id: string
   score: number
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface VectorStoreAdapter {

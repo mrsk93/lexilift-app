@@ -22,8 +22,9 @@ export async function GET(request: Request) {
       .orderBy(desc(chatSessions.createdAt))
 
     return NextResponse.json(sessions)
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: error.message === 'Forbidden' ? 403 : 500 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: message === 'Forbidden' ? 403 : 500 })
   }
 }
 
@@ -46,7 +47,8 @@ export async function POST(request: Request) {
     }).returning()
 
     return NextResponse.json(newSession)
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: error.message === 'Forbidden' ? 403 : 500 })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: message === 'Forbidden' ? 403 : 500 })
   }
 }

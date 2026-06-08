@@ -1,11 +1,14 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { env } from '@/lib/env'
+import type { User } from '@supabase/supabase-js'
 
-export async function updateSession(request: NextRequest) {
+type AuthedResponse = NextResponse & { _user?: User | null }
+
+export async function updateSession(request: NextRequest): Promise<AuthedResponse> {
   let supabaseResponse = NextResponse.next({
     request,
-  })
+  }) as AuthedResponse
 
   const supabase = createServerClient(
     env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,7 +22,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
-          })
+          }) as AuthedResponse
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -30,7 +33,7 @@ export async function updateSession(request: NextRequest) {
 
   // refreshing the auth token
   const { data: { user } } = await supabase.auth.getUser()
-  ;(supabaseResponse as any)._user = user
+  supabaseResponse._user = user
 
   return supabaseResponse
 }

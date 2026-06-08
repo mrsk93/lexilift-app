@@ -54,10 +54,16 @@ describe('processDocument', () => {
   })
 
   it('parses, chunks, embeds, upserts, and marks ready', async () => {
-    const result = await (processDocument as any).fn({
+    type ProcessFn = (ctx: {
+      event: { data: { docId: string } }
+      step: { run: (name: string, fn: () => unknown) => unknown }
+    }) => Promise<unknown>
+
+    const fn = (processDocument as unknown as { fn: ProcessFn }).fn
+    const result = await fn({
       event: { data: { docId: 'd1' } },
       step: { run: (_n: string, fn: () => unknown) => fn() },
-    } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    })
 
     expect(result).toMatchObject({ docId: 'd1', chunkCount: 1 })
     expect(parsePdf).toHaveBeenCalled()
