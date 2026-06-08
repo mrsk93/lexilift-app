@@ -9,14 +9,17 @@ export async function signup(formData: FormData) {
   const supabase = await createClient()
   const origin = (await headers()).get('origin')
 
-  const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+  const consent = formData.get('consent')
+
+  if (consent !== 'true') {
+    redirect('/signup?error=' + encodeURIComponent('You must agree to the Terms of Service and Privacy Policy'))
   }
 
   const { error } = await supabase.auth.signUp({
-    email: data.email,
-    password: data.password,
+    email,
+    password,
     options: {
       emailRedirectTo: `${origin}/api/auth/callback`,
     },

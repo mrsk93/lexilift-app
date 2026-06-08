@@ -10,7 +10,9 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const { error, message } = await searchParams
+  const params = await searchParams
+  const error = typeof params.error === 'string' ? params.error : undefined
+  const message = typeof params.message === 'string' ? params.message : undefined
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -102,11 +104,22 @@ export default async function LoginPage({
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-center text-muted-foreground w-full">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/signup" className="text-primary hover:underline font-medium">
               Sign up
             </Link>
           </div>
+          <p className="text-xs text-muted-foreground text-center">
+            By signing in you agree to our{' '}
+            <Link href="/terms" className="underline hover:text-primary">
+              Terms
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy" className="underline hover:text-primary">
+              Privacy
+            </Link>
+            .
+          </p>
         </CardFooter>
       </Card>
     </div>

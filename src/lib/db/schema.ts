@@ -68,6 +68,8 @@ export const profiles = pgTable('profiles', {
   currentOrgId: uuid('current_org_id').references(() => organizations.id),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
   deletionScheduledFor: timestamp('deletion_scheduled_for', { withTimezone: true }),
+  tosAcceptedAt: timestamp('tos_accepted_at', { withTimezone: true }),
+  privacyAcceptedAt: timestamp('privacy_accepted_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 

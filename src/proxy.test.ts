@@ -47,6 +47,12 @@ describe('proxy', () => {
     expect(res.headers.get('location')).toBeNull()
   })
 
+  it.each(['/terms', '/privacy', '/dpa'])('allows %s without auth', async (path) => {
+    mockGetUser.mockResolvedValue(null)
+    const res = await proxy(makeReq(`http://localhost${path}`))
+    expect(res.headers.get('location')).toBeNull()
+  })
+
   it('sets x-request-id header on response', async () => {
     mockGetUser.mockResolvedValue(null)
     const res = await proxy(makeReq('http://localhost/login'))
