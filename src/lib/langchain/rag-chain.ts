@@ -4,20 +4,8 @@ import { OpenAIEmbeddings } from '@langchain/openai'
 import { env } from '@/lib/env'
 import { makeMockEmbedding, openAIEmbeddingOptions } from '@/lib/llm/embeddings'
 
-/**
- * Retrieve the top-K context chunks for a user query.
- *
- * Pipeline:
- *   1. Embed the query with OpenAI text-embedding-3-small (dim from env)
- *   2. Query Pinecone for the top 20 matches in the org's namespace
- *   3. Rerank with Voyage AI and return the top 5
- *
- * If the query embedding fails (no OpenAI key, network error), we fall back
- * to a mock embedding so dev still works end-to-end. The mock has the same
- * shape as a real embedding but no semantic content.
- */
 export async function retrieveContext(query: string, orgId: string) {
-  // 1. Embed the query
+  // 1. Embed Query
   const embeddings = new OpenAIEmbeddings({
     openAIApiKey: env.OPENAI_API_KEY || 'mock-key',
     ...openAIEmbeddingOptions,
@@ -30,28 +18,24 @@ export async function retrieveContext(query: string, orgId: string) {
     queryEmbedding = makeMockEmbedding()
   }
 
-  // 2. Query Pinecone (top 20 for reranking headroom)
+  // 2. Query Pinecone Vector Store (top 20 for hybrid search/reranking)
   const vectorStore = getVectorStore()
   const matches = await vectorStore.query(queryEmbedding, orgId, 20)
-  if (matches.length === 0) {
-    return []
-  }
+  
+  if (matches.length === 0) return []
 
-  const chunksText = matches.map((m) => m.metadata?.text || '')
+  const chunksText = matches.map(m => m.metadata?.text || '')
 
-  // 3. Rerank with Voyage AI. Note: the API returns [{index, relevance_score}]
-  //    without the document text — we look the text back up via the index.
+  // 3. Rerank using Voyage AI
   const reranker = getReranker()
   const rerankedResults = await reranker.rerank(query, chunksText)
 
-  return rerankedResults.map((r) => {
-    const source = matches[r.index]
-    return {
-      text: chunksText[r.index] ?? '',
-      score: r.relevance_score,
-      metadata: source?.metadata,
-    }
-  })
+  // 4. Return top K contexts (e.g. top 5)
+  return rerankedResults.map(r => ({
+    text: r.document,
+    score: r.relevance_score,
+    metadata: matches[r.index]?.metadata
+  }))
 }
 
 export function buildContextPrompt(query: string, contextItems: any[]) {
