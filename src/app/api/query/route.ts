@@ -5,6 +5,8 @@ import { retrieveContext, buildContextPrompt } from '@/lib/langchain/rag-chain'
 import { createUIMessageStream, createUIMessageStreamResponse } from 'ai'
 import { db } from '@/lib/db/client'
 import { chatMessages } from '@/lib/db/schema'
+import { assertOrgPlanLimit } from '@/lib/billing/assertOrgPlanLimit'
+import { incrementUsage } from '@/lib/billing/usage'
 
 type ChatRole = 'system' | 'user' | 'assistant'
 
@@ -37,6 +39,13 @@ export async function POST(req: Request) {
 
     await requireOrgAccess(orgId)
 
+    try {
+      await assertOrgPlanLimit(orgId, 'queries')
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Query limit reached'
+      return NextResponse.json({ error: message }, { status: 402 })
+    }
+
     const lastMessage = messages[messages.length - 1] as IncomingMessage
     const userQuery = extractText(lastMessage)
 
@@ -45,6 +54,13 @@ export async function POST(req: Request) {
 
     const llmMessages: Array<{ role: ChatRole; content: string }> = [
       { role: 'system', content: 'You are a helpful, professional AI assistant for LexiLift.' },
+      // Prepend a synthetic greeting turn. AI SDK v6's streamText produces
+      // empty/useless responses when the messages array contains only
+      // (system, user) with no prior conversation. By always starting the
+      // LLM thread with a benign 'Hi' exchange, the model responds normally.
+      // The 'previous turns' from the real chat follow below.
+      { role: 'user', content: 'Hi' },
+      { role: 'assistant', content: 'Hello! How can I help you today?' },
       ...messages.slice(0, -1).map((m: IncomingMessage) => ({
         role: ((m.role as ChatRole) ?? 'user'),
         content: extractText(m),
@@ -98,6 +114,11 @@ export async function POST(req: Request) {
           ])
         } catch (e) {
           console.error('Failed to save chat history', e)
+        }
+        try {
+          await incrementUsage(orgId)
+        } catch (e) {
+          console.error('Usage increment failed', e)
         }
       },
     })

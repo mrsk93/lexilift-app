@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import { Upload, File, FileText, X } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
+import { notify } from '@/lib/ui/toast'
 
 export function UploadDropzone({ orgId }: { orgId: string }) {
   const [files, setFiles] = useState<File[]>([])
@@ -51,12 +52,17 @@ export function UploadDropzone({ orgId }: { orgId: string }) {
           body: formData 
         })
         
-        if (!response.ok) throw new Error('Upload failed')
-        
+        if (!response.ok) {
+          // Surface the server's actual error message so users (and logs) see the cause
+          const detail = await response.text().catch(() => '')
+          throw new Error(detail || `Upload failed (${response.status})`)
+        }
+
         setProgress(prev => ({ ...prev, [file.name]: 100 }))
+        notify.success(`Uploaded ${file.name}`)
       } catch (error) {
         console.error('Failed to upload file:', file.name, error)
-        // Mark as failed in progress state
+        notify.error(`Failed to upload ${file.name}`)
         setProgress(prev => ({ ...prev, [file.name]: -1 }))
       }
     }

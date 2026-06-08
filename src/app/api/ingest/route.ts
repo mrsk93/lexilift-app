@@ -3,8 +3,9 @@ import { db } from '@/lib/db/client'
 import { documents } from '@/lib/db/schema'
 import { requireAuth, requireOrgAccess } from '@/lib/auth/org-utils'
 import { getStorage } from '@/lib/adapters/storage/supabase'
-import { inngest } from '@/lib/inngest/client'
+import { safeSend } from '@/lib/inngest/client'
 import { v4 as uuidv4 } from 'uuid'
+import { assertOrgPlanLimit } from '@/lib/billing/assertOrgPlanLimit'
 
 export async function POST(request: Request) {
   try {
@@ -20,6 +21,13 @@ export async function POST(request: Request) {
 
     // Verify user has access to this org
     await requireOrgAccess(orgId)
+
+    try {
+      await assertOrgPlanLimit(orgId, 'documents')
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Document limit reached'
+      return NextResponse.json({ error: message }, { status: 402 })
+    }
 
     // 1. Upload to storage
     const storage = getStorage()
@@ -42,12 +50,8 @@ export async function POST(request: Request) {
       uploadedBy: user.id
     }).returning()
 
-    // 3. Trigger Ingestion Workflow
-    try {
-      await inngest.send({ name: 'document/uploaded', data: { docId: newDoc.id } })
-    } catch (e) {
-      console.error('Inngest send failed, document will remain in processing:', e)
-    }
+    // 3. Trigger Ingestion Workflow (graceful: no-op if Inngest dev server isn't running)
+    await safeSend({ name: 'document/uploaded', data: { docId: newDoc.id } })
 
     return NextResponse.json(newDoc)
   } catch (error: any) {

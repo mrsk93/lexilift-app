@@ -10,22 +10,32 @@ const serverSchema = z.object({
   PINECONE_API_KEY: z.string().min(1).optional(),
   PINECONE_INDEX: z.string().min(1).optional(),
   PINECONE_ENVIRONMENT: z.string().min(1).optional(),
+  /**
+   * Embedding vector dimension. Must match the dimension of the Pinecone
+   * index. Defaults to 1536 (OpenAI text-embedding-3-small). OpenAI also
+   * supports 256, 512, 1024, 3072 for that model.
+   */
+  EMBEDDING_DIMENSION: z.coerce.number().int().positive().default(1536),
   VOYAGE_API_KEY: z.string().min(1).optional(),
   POLAR_ACCESS_TOKEN: z.string().min(1).optional(),
   POLAR_WEBHOOK_SECRET: z.string().min(1).optional(),
   POLAR_ORG_ID: z.string().min(1).optional(),
   POLAR_PRO_PRODUCT_ID: z.string().min(1).optional(),
   POLAR_TEAM_PRODUCT_ID: z.string().min(1).optional(),
+  POLAR_ENTERPRISE_CONTACT_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
   RESEND_API_KEY: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().min(1).default('LexiLift <hello@lexilift.dev>'),
+  APP_URL: z.string().url().default('http://localhost:3000'),
   INNGEST_EVENT_KEY: z.string().min(1).optional(),
   INNGEST_SIGNING_KEY: z.string().min(1).optional(),
   SENTRY_DSN: z.string().url().optional(),
+  POSTHOG_PROJECT_API_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
   NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
-  NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
+  NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional().default('https://us.i.posthog.com'),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
 })
 
