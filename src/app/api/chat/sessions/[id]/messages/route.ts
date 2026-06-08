@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { and, asc, eq } from 'drizzle-orm'
+import { asc, eq } from 'drizzle-orm'
 import { requireAuth, requireOrgAccess } from '@/lib/auth/org-utils'
 import { db } from '@/lib/db/client'
 import { chatMessages, chatSessions } from '@/lib/db/schema'

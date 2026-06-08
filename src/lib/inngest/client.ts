@@ -37,7 +37,7 @@ let warnedMissing = false
 export async function safeSend(event: { name: string; data: unknown }) {
   try {
     await inngest.send(event as Parameters<typeof inngest.send>[0])
-  } catch (err) {
+  } catch {
     if (!warnedMissing) {
       warnedMissing = true
       console.warn(

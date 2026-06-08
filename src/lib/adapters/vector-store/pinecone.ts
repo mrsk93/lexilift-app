@@ -61,7 +61,8 @@ export class PineconeAdapter implements VectorStoreAdapter {
       const batch = records.slice(i, i + batchSize)
       // Remove embedding from metadata before sending (optional but good practice to save space)
       const cleanBatch = batch.map((r) => {
-        const { embedding: _embedding, ...restMetadata } = r.metadata
+        const { embedding, ...restMetadata } = r.metadata
+        void embedding
         return {
           id: r.id,
           values: r.values,

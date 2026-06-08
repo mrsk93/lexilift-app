@@ -6,7 +6,7 @@ import { eq, desc } from 'drizzle-orm'
 
 export async function GET(request: Request) {
   try {
-    const user = await requireAuth()
+    await requireAuth()
     const { searchParams } = new URL(request.url)
     const orgId = searchParams.get('orgId')
 
