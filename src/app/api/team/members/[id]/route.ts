@@ -4,6 +4,7 @@ import { requireOrgAdmin } from '@/lib/auth/org-utils'
 import { db } from '@/lib/db/client'
 import { memberships } from '@/lib/db/schema'
 import { and, eq } from 'drizzle-orm'
+import { logAuditEvent } from '@/lib/audit/log'
 
 const patchSchema = z.object({ role: z.enum(['owner', 'admin', 'member']) })
 
@@ -15,13 +16,25 @@ export async function PATCH(
     const url = new URL(req.url)
     const orgId = url.searchParams.get('orgId')
     if (!orgId) return NextResponse.json({ error: 'orgId required' }, { status: 400 })
-    await requireOrgAdmin(orgId)
+    const { userId } = await requireOrgAdmin(orgId)
     const { id } = await params
     const body = patchSchema.parse(await req.json())
     await db
       .update(memberships)
       .set({ role: body.role })
       .where(and(eq(memberships.id, id), eq(memberships.orgId, orgId)))
+    try {
+      await logAuditEvent({
+        orgId,
+        actorId: userId,
+        action: 'member.role_changed',
+        targetType: 'org_member',
+        targetId: id,
+        metadata: { newRole: body.role },
+      })
+    } catch {
+      // audit is best-effort; do not break the request
+    }
     return NextResponse.json({ ok: true })
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -64,6 +77,17 @@ export async function DELETE(
     }
 
     await db.delete(memberships).where(and(eq(memberships.id, id), eq(memberships.orgId, orgId)))
+    try {
+      await logAuditEvent({
+        orgId,
+        actorId: ctx.userId,
+        action: 'member.removed',
+        targetType: 'org_member',
+        targetId: id,
+      })
+    } catch {
+      // audit is best-effort; do not break the request
+    }
     return new NextResponse(null, { status: 204 })
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Internal error'

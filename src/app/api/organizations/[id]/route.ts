@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 import { requireOrgAdmin } from '@/lib/auth/org-utils'
 import { db } from '@/lib/db/client'
 import { organizations } from '@/lib/db/schema'
+import { logAuditEvent } from '@/lib/audit/log'
 
 const putSchema = z.object({ name: z.string().min(1).max(60) })
 
@@ -62,7 +63,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const { orgId, role } = await requireOrgAdmin(id)
+    const { orgId, userId, role } = await requireOrgAdmin(id)
     if (orgId !== id) {
       return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
     }
@@ -70,6 +71,17 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'OWNER_REQUIRED' }, { status: 403 })
     }
     await db.delete(organizations).where(eq(organizations.id, orgId))
+    try {
+      await logAuditEvent({
+        orgId,
+        actorId: userId,
+        action: 'org.delete',
+        targetType: 'organization',
+        targetId: orgId,
+      })
+    } catch {
+      // org is being deleted; audit row will be cascade-deleted anyway
+    }
     return new NextResponse(null, { status: 204 })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Internal error'

@@ -3,13 +3,27 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockRequireAuth, mockSet, mockWhere, mockLoggerInfo, mockLoggerError } = vi.hoisted(
+const {
+  mockRequireAuth,
+  mockSet,
+  mockWhere,
+  mockSelect,
+  mockInsert,
+  mockValues,
+  mockLoggerInfo,
+  mockLoggerError,
+  mockLoggerWarn,
+} = vi.hoisted(
   () => ({
     mockRequireAuth: vi.fn(),
     mockSet: vi.fn(),
     mockWhere: vi.fn(),
+    mockSelect: vi.fn(),
+    mockInsert: vi.fn(),
+    mockValues: vi.fn(),
     mockLoggerInfo: vi.fn(),
     mockLoggerError: vi.fn(),
+    mockLoggerWarn: vi.fn(),
   })
 )
 
@@ -20,9 +34,21 @@ const updateChain = {
   },
 }
 
+const selectChain = {
+  from: () => ({
+    where: () => ({
+      orderBy: () => ({
+        limit: () => [{ orgId: 'o1' }],
+      }),
+    }),
+  }),
+}
+
 vi.mock('@/lib/db/client', () => ({
   db: {
     update: vi.fn(() => updateChain),
+    select: (...args: unknown[]) => mockSelect(...args),
+    insert: (...args: unknown[]) => mockInsert(...args),
   },
 }))
 
@@ -34,6 +60,7 @@ vi.mock('@/lib/log/log', () => ({
   logger: {
     info: (...args: unknown[]) => mockLoggerInfo(...args),
     error: (...args: unknown[]) => mockLoggerError(...args),
+    warn: (...args: unknown[]) => mockLoggerWarn(...args),
   },
 }))
 
@@ -42,6 +69,9 @@ import { POST } from './route'
 beforeEach(() => {
   vi.clearAllMocks()
   mockWhere.mockResolvedValue(undefined)
+  mockValues.mockResolvedValue(undefined)
+  mockInsert.mockReturnValue({ values: mockValues })
+  mockSelect.mockReturnValue(selectChain)
 })
 
 describe('POST /api/account/cancel-deletion', () => {

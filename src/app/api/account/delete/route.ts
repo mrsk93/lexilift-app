@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/org-utils'
 import { db } from '@/lib/db/client'
-import { profiles } from '@/lib/db/schema'
+import { memberships, profiles } from '@/lib/db/schema'
 import { logger } from '@/lib/log/log'
 import { captureError } from '@/lib/sentry/server'
 import { trackServerEvent } from '@/lib/analytics/posthog-server'
+import { logAuditEvent } from '@/lib/audit/log'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,6 +22,29 @@ export async function POST() {
       .update(profiles)
       .set({ deletedAt, deletionScheduledFor: scheduledFor })
       .where(eq(profiles.id, user.id))
+
+    const firstMembership = await db
+      .select({ orgId: memberships.orgId })
+      .from(memberships)
+      .where(eq(memberships.userId, user.id))
+      .orderBy(desc(memberships.createdAt))
+      .limit(1)
+
+    const firstOrgId = firstMembership[0]?.orgId
+    if (firstOrgId) {
+      try {
+        await logAuditEvent({
+          orgId: firstOrgId,
+          actorId: user.id,
+          action: 'account.delete.requested',
+          targetType: 'user',
+          targetId: user.id,
+          metadata: { scheduledFor: scheduledFor.toISOString() },
+        })
+      } catch (auditErr) {
+        logger.warn({ err: auditErr }, 'audit log failed (non-blocking)')
+      }
+    }
 
     try {
       await trackServerEvent({

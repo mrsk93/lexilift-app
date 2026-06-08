@@ -10,6 +10,8 @@ const {
   mockDbSelect,
   mockDbUpdate,
   mockDbDelete,
+  mockDbInsert,
+  mockDbValues,
 } = vi.hoisted(() => ({
   mockRequireOrgAdmin: vi.fn(),
   mockRequireOrgMember: vi.fn(),
@@ -17,6 +19,8 @@ const {
   mockDbSelect: vi.fn(),
   mockDbUpdate: vi.fn(),
   mockDbDelete: vi.fn(),
+  mockDbInsert: vi.fn(),
+  mockDbValues: vi.fn(),
 }))
 
 vi.mock('@/lib/env', () => ({
@@ -46,6 +50,7 @@ vi.mock('@/lib/db/client', () => ({
     select: mockDbSelect,
     update: mockDbUpdate,
     delete: mockDbDelete,
+    insert: mockDbInsert,
   },
 }))
 
@@ -55,6 +60,8 @@ import { PATCH, DELETE } from './[id]/route'
 beforeEach(() => {
   vi.clearAllMocks()
   mockCreateAdminClient.mockReturnValue(null)
+  mockDbValues.mockResolvedValue(undefined)
+  mockDbInsert.mockReturnValue({ values: mockDbValues })
 })
 
 const memberRow = {

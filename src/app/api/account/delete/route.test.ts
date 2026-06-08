@@ -7,6 +7,9 @@ const {
   mockRequireAuth,
   mockSet,
   mockWhere,
+  mockSelect,
+  mockInsert,
+  mockValues,
   mockLoggerInfo,
   mockLoggerError,
   mockLoggerWarn,
@@ -16,6 +19,9 @@ const {
   mockRequireAuth: vi.fn(),
   mockSet: vi.fn(),
   mockWhere: vi.fn(),
+  mockSelect: vi.fn(),
+  mockInsert: vi.fn(),
+  mockValues: vi.fn(),
   mockLoggerInfo: vi.fn(),
   mockLoggerError: vi.fn(),
   mockLoggerWarn: vi.fn(),
@@ -30,9 +36,21 @@ const updateChain = {
   },
 }
 
+const selectChain = {
+  from: () => ({
+    where: () => ({
+      orderBy: () => ({
+        limit: () => [{ orgId: 'o1' }],
+      }),
+    }),
+  }),
+}
+
 vi.mock('@/lib/db/client', () => ({
   db: {
     update: vi.fn(() => updateChain),
+    select: (...args: unknown[]) => mockSelect(...args),
+    insert: (...args: unknown[]) => mockInsert(...args),
   },
 }))
 
@@ -61,6 +79,9 @@ import { POST } from './route'
 beforeEach(() => {
   vi.clearAllMocks()
   mockWhere.mockResolvedValue(undefined)
+  mockValues.mockResolvedValue(undefined)
+  mockInsert.mockReturnValue({ values: mockValues })
+  mockSelect.mockReturnValue(selectChain)
 })
 
 describe('POST /api/account/delete', () => {

@@ -8,11 +8,15 @@ const {
   mockRequireOrgMember,
   mockDbUpdate,
   mockDbDelete,
+  mockDbInsert,
+  mockDbValues,
 } = vi.hoisted(() => ({
   mockRequireOrgAdmin: vi.fn(),
   mockRequireOrgMember: vi.fn(),
   mockDbUpdate: vi.fn(),
   mockDbDelete: vi.fn(),
+  mockDbInsert: vi.fn(),
+  mockDbValues: vi.fn(),
 }))
 
 vi.mock('@/lib/env', () => ({
@@ -37,6 +41,7 @@ vi.mock('@/lib/db/client', () => ({
   db: {
     update: mockDbUpdate,
     delete: mockDbDelete,
+    insert: mockDbInsert,
   },
 }))
 
@@ -46,6 +51,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   mockDbUpdate.mockReturnValue({ set: () => ({ where: () => Promise.resolve([]) }) })
   mockDbDelete.mockReturnValue({ where: () => Promise.resolve([]) })
+  mockDbValues.mockResolvedValue(undefined)
+  mockDbInsert.mockReturnValue({ values: mockDbValues })
 })
 
 describe('Org API', () => {
