@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx scripts/seed.ts",
+    "smoke": "tsx scripts/smoke.ts",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },
