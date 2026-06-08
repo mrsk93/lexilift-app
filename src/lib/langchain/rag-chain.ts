@@ -31,11 +31,14 @@ export async function retrieveContext(query: string, orgId: string) {
   const rerankedResults = await reranker.rerank(query, chunksText)
 
   // 4. Return top K contexts (e.g. top 5)
-  return rerankedResults.map(r => ({
-    text: r.document,
-    score: r.relevance_score,
-    metadata: matches[r.index]?.metadata
-  }))
+  return rerankedResults.map((r) => {
+    const source = matches[r.index]
+    return {
+      text: chunksText[r.index] ?? '',
+      score: r.relevance_score,
+      metadata: source?.metadata,
+    }
+  })
 }
 
 export function buildContextPrompt(query: string, contextItems: any[]) {
