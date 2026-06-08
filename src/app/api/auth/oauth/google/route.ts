@@ -7,7 +7,7 @@ export async function GET() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${env.APP_URL}/api/auth/callback`,
+      redirectTo: `${env.APP_URL}/api/auth/callback?next=/dashboard`,
     },
   })
   if (error || !data?.url) {

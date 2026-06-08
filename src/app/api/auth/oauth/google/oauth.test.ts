@@ -43,6 +43,22 @@ describe('Google OAuth init', () => {
     expect(r.headers.get('location')).toContain('provider=google')
   })
 
+  it('passes next=/dashboard on the callback redirectTo', async () => {
+    mockSignInWithOAuth.mockResolvedValueOnce({
+      data: { url: 'https://test.supabase.co/auth/v1/authorize?provider=google' },
+      error: null,
+    })
+    await GET()
+    expect(mockSignInWithOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'google',
+        options: expect.objectContaining({
+          redirectTo: 'http://localhost:3000/api/auth/callback?next=/dashboard',
+        }),
+      })
+    )
+  })
+
   it('returns 500 on supabase error', async () => {
     mockSignInWithOAuth.mockResolvedValueOnce({ data: null, error: { message: 'oops' } })
     const r = await GET()
