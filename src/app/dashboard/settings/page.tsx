@@ -5,6 +5,7 @@ import { getCurrentProfile, requireOrgMember } from '@/lib/auth/org-utils'
 import { db } from '@/lib/db/client'
 import { memberships, organizations, profiles } from '@/lib/db/schema'
 import { OrgForm } from '@/components/settings/OrgForm'
+import { DataExportButton } from '@/components/settings/DataExportButton'
 import { DeleteOrgDialog } from '@/components/settings/DeleteOrgDialog'
 import { TransferOwnershipDialog, type TransferCandidate } from '@/components/settings/TransferOwnershipDialog'
 import { MembersTable, type Member, type Role } from '@/components/team/MembersTable'
@@ -71,15 +72,28 @@ export default async function SettingsPage() {
             id: 'general',
             label: 'General',
             content: (
-              <Card className="shadow-none border-border">
-                <CardHeader>
-                  <CardTitle>Workspace</CardTitle>
-                  <CardDescription>Update your workspace name.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <OrgForm orgId={orgId} initialName={org.name} />
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                <Card className="shadow-none border-border">
+                  <CardHeader>
+                    <CardTitle>Workspace</CardTitle>
+                    <CardDescription>Update your workspace name.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <OrgForm orgId={orgId} initialName={org.name} />
+                  </CardContent>
+                </Card>
+                <Card className="shadow-none border-border">
+                  <CardHeader>
+                    <CardTitle>Your data</CardTitle>
+                    <CardDescription>
+                      Download a copy of all data associated with your account (GDPR Art. 20).
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <DataExportButton />
+                  </CardContent>
+                </Card>
+              </div>
             ),
           },
           {
