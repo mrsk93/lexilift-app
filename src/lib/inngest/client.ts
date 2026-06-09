@@ -23,9 +23,13 @@ export const subscriptionSync = eventType('subscription/sync', {
   schema: staticSchema<Events['subscription/sync']['data']>(),
 })
 
+const hasInngestConfig = Boolean(
+  process.env.INNGEST_SIGNING_KEY || process.env.INNGEST_EVENT_KEY,
+)
+
 export const inngest = new Inngest({
   id: 'lexilift',
-  isDev: process.env.NODE_ENV !== 'production',
+  isDev: process.env.NODE_ENV !== 'production' || !hasInngestConfig,
 })
 
 /**
