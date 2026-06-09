@@ -45,4 +45,4 @@ next-env.d.ts
 
 # a11y audit report
 /e2e/.a11y-report.json
-lib/
+/lib/
