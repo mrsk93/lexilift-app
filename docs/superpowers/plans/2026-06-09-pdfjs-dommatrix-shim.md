@@ -98,6 +98,8 @@ Expected output: shows `docx.ts`, `pdf.ts`, `text.ts`, `url.ts` (and their `.tes
 Create `src/lib/parsers/dommatrix-shim.ts` with the following exact contents:
 
 ```ts
+// @thednp/dommatrix ships as CJS: `module.exports = Class`. TS's
+// `esModuleInterop` unwraps this to `import X from 'pkg'` for us.
 import DOMMatrix from '@thednp/dommatrix'
 
 declare global {
@@ -106,27 +108,21 @@ declare global {
 }
 
 // Augment the prototype with the *Self methods pdfjs-dist uses
-// (no-op chains: identity transform). @thednp/dommatrix doesn't
-// implement these, but pdfjs-dist's text-extraction path doesn't
-// depend on the math being correct — it just needs the methods
-// to exist and return `this` for chaining.
+// (no-op chains: identity transform). @thednp/dommatrix already
+// implements multiplySelf, translateSelf, scaleSelf, rotateSelf
+// and friends. The actual gaps for pdfjs-dist's needs are:
+//   - invertSelf()  (pdfjs-dist: pdf.mjs:7622, 16577, 16607, 16686, 16792)
+//   - preMultiplySelf()  (pdfjs-dist: pdf.mjs:16697)
+//   - invert()      (defensive; pdfjs-dist doesn't currently call this
+//                    on a fresh matrix, but it appears in related APIs)
 if (typeof DOMMatrix.prototype.invertSelf !== 'function') {
   DOMMatrix.prototype.invertSelf = function () { return this }
-}
-if (typeof DOMMatrix.prototype.multiplySelf !== 'function') {
-  DOMMatrix.prototype.multiplySelf = function () { return this }
 }
 if (typeof DOMMatrix.prototype.preMultiplySelf !== 'function') {
   DOMMatrix.prototype.preMultiplySelf = function () { return this }
 }
-if (typeof DOMMatrix.prototype.translateSelf !== 'function') {
-  DOMMatrix.prototype.translateSelf = function () { return this }
-}
-if (typeof DOMMatrix.prototype.scaleSelf !== 'function') {
-  DOMMatrix.prototype.scaleSelf = function () { return this }
-}
-if (typeof DOMMatrix.prototype.rotateSelf !== 'function') {
-  DOMMatrix.prototype.rotateSelf = function () { return this }
+if (typeof DOMMatrix.prototype.invert !== 'function') {
+  DOMMatrix.prototype.invert = function () { return this }
 }
 
 if (typeof globalThis.DOMMatrix === 'undefined') {
